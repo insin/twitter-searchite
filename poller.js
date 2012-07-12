@@ -58,7 +58,7 @@ function insertTweet(tweet, cb) {
   async.parallel([
     // Add tweet id to chronological view
     function(cb) {
-      $r.zadd('tweets.ctime', cron, tweet.id_str, cb)
+      $r.zadd('tweets.cron', ctime, tweet.id_str, cb)
     }
     // Add tweet id to the user's chronological view
   , function(cb) {
