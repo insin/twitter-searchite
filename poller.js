@@ -2,6 +2,7 @@ var async = require('async')
   , moment = require('moment')
 
 var settings = require('./settings')
+  , pluralise = require('./utils').pluralise
 
 var $r = require('redis').createClient()
 
@@ -80,8 +81,4 @@ function insertTweet(tweet, cb) {
       }, cb)
     }
   ], cb)
-}
-
-function pluralise(number) {
-  return (number == 1 ? '' : 's')
 }

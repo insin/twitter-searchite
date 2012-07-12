@@ -3,6 +3,7 @@ var express = require('express')
   , moment = require('moment')
 
 var settings = require('./settings')
+  , extend = require('./utils').extend
 
 var $r = require('redis').createClient()
 
@@ -69,13 +70,4 @@ function Tweet(obj) {
   this.userId = obj.userId
   this.avatar = obj.avatar
   this.created = moment(obj.created).format('h:mm A - DD MMM YY')
-}
-
-function extend(dest, src) {
-  for (var prop in src) {
-    if (src.hasOwnProperty(prop)) {
-      dest[prop] = src[prop]
-    }
-  }
-  return dest
 }
