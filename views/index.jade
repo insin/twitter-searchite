@@ -1,0 +1,12 @@
+extends base
+
+block content
+  h1= search
+  each tweet in tweets
+    .tweet
+      .tweet-header
+        img.tweet-avatar(src='#{tweet.avatar}')
+        span.tweet-user @#{tweet.user}
+      p.tweet-text!= tweet.text
+      .tweet-footer
+        span.tweet-created= tweet.created

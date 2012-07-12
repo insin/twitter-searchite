@@ -1,0 +1,26 @@
+{
+  "name": "twitter-searchite"
+, "version": "0.0.0"
+, "description": "Quick creation of sites driven by polling a Twitter search"
+, "dependencies": {
+    "async": "~0.1.22"
+  , "hiredis": "~0.1.14"
+  , "express": "~2.5.11"
+  , "moment": "~1.6.2"
+  , "ntwitter": "~0.4.0"
+  , "twitter-text": "~1.5.0"
+  , "redis": "~0.7.2"
+  , "jade": "~0.26.3"
+  }
+, "repository": {
+    "type": "git"
+  , "url": "https://github.com/insin/twitter-searchite"
+  }
+, "keywords": [
+    "twitter"
+  , "search"
+  , "site"
+  ]
+, "author": "Jonathan Buchanan <jonathan.buchanan@gmail.com>"
+, "license": "MIT"
+}

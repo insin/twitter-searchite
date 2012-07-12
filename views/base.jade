@@ -1,0 +1,24 @@
+!!!
+html
+  head
+    title= search
+    meta(name='viewport', content='width=device-width, initial-scale=1.0')
+    link(rel='stylesheet', href='http://current.bootstrapcdn.com/bootstrap-v204/css/bootstrap.min.css')
+    style
+      body {
+        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+      }
+    link(rel='stylesheet', href='http://current.bootstrapcdn.com/bootstrap-v204/css/bootstrap-responsive.min.css')
+  body
+    .navbar.navbar-fixed-top
+      .navbar-inner
+        .container
+          a.brand(href='/')= search
+    .container
+      block content
+      hr
+      footer
+        p
+        | #{search}, made with  
+        a(href='https://github.com/insin/twitter-searchite') twitter-searchite
+        |  v#{version}
