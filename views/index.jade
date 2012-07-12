@@ -4,9 +4,11 @@ block extrahead
   style
     .tweet { margin-bottom: 12px; position: relative; padding-bottom: 6px; border-bottom: 1px solid #eee; }
     .tweet-header, .tweet-text, .tweet-footer { margin-left: 60px; }
-    .tweet-header .tweet-avatar { position: absolute; top: 0; left: 0; }
-    .tweet-user { font-weight: bold; color: #000; }
-    .tweet-header a:hover, .tweet-header a:hover .tweet-user { color: #0088CC; }
+    .tweet .time { color: #bbb; float: right; margin-top: 1px; }
+    .time a { color: #999; font-size: 12px; }
+    .tweet .avatar { position: absolute; top: 0; left: 0; }
+    .tweet .tweet-username { font-weight: bold; color: #000; }
+    .tweet-header a:hover, .tweet-header a:hover .tweet-username { color: #0088CC; }
     .tweet-text { margin-bottom: 0; }
     .tweet-footer { color: #999; font-style: italic; }
 block content
@@ -17,9 +19,11 @@ block content
       each tweet in tweets
         .tweet
           .tweet-header
-            a(href='https://twitter.com/#{tweet.user}')
-              img.tweet-avatar(src='#{tweet.avatar}')
-              span.tweet-user @#{tweet.user}
+            small.time
+              a.tweet-timestamp(title='#{tweet.created}', href='https://twitter.com/#{tweet.user}/status/#{tweet.id}')= tweet.timestamp
+            a.account(href='https://twitter.com/#{tweet.user}')
+              img.avatar(src='#{tweet.avatar}')
+              span.tweet-username @#{tweet.user}
           p.tweet-text!= tweet.text
           .tweet-footer
             span.tweet-created= tweet.created

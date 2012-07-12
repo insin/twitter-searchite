@@ -5,6 +5,20 @@ var express = require('express')
 var settings = require('./settings')
   , extend = require('./utils').extend
 
+extend(moment.relativeTime, {
+  s  : "now"
+, m  : "1m"
+, mm : "%dm"
+, h  : "1h"
+, hh : "%dh"
+, d  : "1d"
+, dd : "%dd"
+, M  : "1m"
+, MM : "%dm"
+, y  : "1y"
+, yy : "%dy"
+})
+
 var $r = require('redis').createClient()
 
 $r.on('error', function (err) {
@@ -56,18 +70,21 @@ function getLatestTweets(options, cb) {
 
 function getTweetsById(ids, cb) {
   var multi = $r.multi()
+    , now = moment()
   ids.forEach(function(id) { multi.hgetall('tweets:#' + id) })
   multi.exec(function(err, objects) {
     if (err) return cb(err)
-    cb(null, objects.map(function(obj) { return new Tweet(obj) }))
+    cb(null, objects.map(function(obj) { return new Tweet(obj, now) }))
   })
 }
 
-function Tweet(obj) {
+function Tweet(obj, now) {
   this.id = obj.id
   this.text = twitter.autoLink(twitter.htmlEscape(obj.text))
   this.user = obj.user
   this.userId = obj.userId
   this.avatar = obj.avatar
-  this.created = moment(obj.created).format('h:mm A - DD MMM YY')
+  var created = moment(obj.created)
+  this.created = created.format('h:mm A - DD MMM YY')
+  this.timestamp = now.from(created, true)
 }
