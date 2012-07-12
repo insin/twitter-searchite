@@ -2,31 +2,36 @@
 twitter-searchite
 =================
 
-Quick creation of sites driven by polling a Twitter search.
+Quick creation of sites driven by polling a Twitter search, using `Node.js`_
+and `Redis`_.
+
+.. _`Node.js`: http://nodejs.org/
+.. _`Redis`: http://redis.io
 
 Usage
 =====
 
-1. Clone the repo.
+#. Clone the repo.
 
-2. Edit `settings.js`_.
+#. ``npm install`` to install dependencies.
+
+#. Edit `settings.js`_.
 
    If you have keys for a Twitter app you want to use, plug 'em in, but the
    Twitter `Search API`_ doesn't require authentication.
 
    Add the search text you want to use to the search setting.
 
-3. Start `Redis`_.
+#. Start ``redis-server``.
 
-4. Run ``node poller.js`` to start polling for Tweets.
+#. ``node poller.js`` to start polling for Tweets.
 
-5. Run ``node server.js`` to serve up a site which uses the Tweets.
+#. ``node server.js`` to serve up a site which uses the Tweets.
 
-6. Hack.
+#. Hack.
 
 .. _`settings.js`: https://github.com/insin/twitter-searchite/blob/master/settings.js
 .. _`Search API`: https://dev.twitter.com/docs/api/1/get/search
-.. _`Redis`: http://redis.io
 
 MIT License
 ===========
