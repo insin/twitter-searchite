@@ -7,18 +7,14 @@ var express = require('express')
 var settings = require('./settings')
   , extend = require('./utils').extend
 
+// Replace moment's time-ago format strings with shorter representations
 extend(moment.relativeTime, {
-  s  : "now"
-, m  : "1m"
-, mm : "%dm"
-, h  : "1h"
-, hh : "%dh"
-, d  : "1d"
-, dd : "%dd"
-, M  : "1m"
-, MM : "%dm"
-, y  : "1y"
-, yy : "%dy"
+  s: 'now'
+, m: '1m', mm: '%dm'
+, h: '1h', hh: '%dh'
+, d: '1d', dd: '%dd'
+, M: '1m', MM: '%dm'
+, y: '1y', yy: '%dy'
 })
 
 var $r = require('redis').createClient()
