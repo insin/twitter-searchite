@@ -40,14 +40,12 @@ function getLatestTweets(options, cb) {
   else {
     options = extend(defaultOptions, options)
   }
-  $r.zcard('tweets.cron', function(err, numTweets) {
+
+  var start = options.start
+    , stop = options.start + (options.count - 1)
+  $r.zrevrange('tweets.cron', start, stop, function(err, tweetIds) {
     if (err) return cb(err)
-    var start = options.start
-      , stop = options.start + (options.count - 1)
-    $r.zrevrange('tweets.cron', start, stop, function(err, tweetIds) {
-      if (err) return cb(err)
-      getTweetsById(tweetIds, cb)
-    })
+    getTweetsById(tweetIds, cb)
   })
 }
 
