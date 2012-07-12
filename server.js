@@ -1,3 +1,5 @@
+var format = require('util').format
+
 var express = require('express')
   , twitter = require('twitter-text')
   , moment = require('moment')
@@ -81,10 +83,15 @@ function getTweetsById(ids, cb) {
 function Tweet(obj, now) {
   this.id = obj.id
   this.text = twitter.autoLink(twitter.htmlEscape(obj.text))
+  // User
   this.user = obj.user
   this.userId = obj.userId
   this.avatar = obj.avatar
+  // Time
   var created = moment(obj.created)
   this.created = created.format('h:mm A - DD MMM YY')
   this.timestamp = now.from(created, true)
+  // Links
+  this.accountlink = format('https://twitter.com/%s', this.user)
+  this.permalink = format('%s/status/%s', this.accountlink, this.id)
 }
