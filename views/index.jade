@@ -20,7 +20,8 @@ block content
         .tweet
           .tweet-header
             small.time
-              a.tweet-timestamp(title='#{tweet.created}', href='#{tweet.permalink}')= tweet.timestamp
+              a.tweet-timestamp(title='#{tweet.created}', href='#{tweet.permalink}')
+                span.short-timestamp(data-time='#{tweet.timestamp}')= tweet.ago
             a.account(href='#{tweet.accountlink}')
               img.avatar(src='#{tweet.avatar}')
               span.tweet-username @#{tweet.user}

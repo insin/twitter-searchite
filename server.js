@@ -90,7 +90,8 @@ function Tweet(obj, now) {
   // Time
   var created = moment(obj.created)
   this.created = created.format('h:mm A - DD MMM YY')
-  this.timestamp = now.from(created, true)
+  this.timestamp = created.valueOf()
+  this.ago = now.from(created, true)
   // Links
   this.accountlink = format('https://twitter.com/%s', this.user)
   this.permalink = format('%s/status/%s', this.accountlink, this.id)
