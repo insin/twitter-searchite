@@ -34,7 +34,11 @@ function getNewTweets() {
     if (err) throw err
     sinceId = sinceId || 0
     console.log('Searching for %s Tweets since #%s', settings.search, sinceId)
-    $t.search(settings.search, {since_id: sinceId}, onSearchResults)
+    $t.search(settings.search, {
+        rpp: 100
+      , result_type: 'recent'
+      , since_id: sinceId
+      }, onSearchResults)
   })
 }
 
