@@ -69,7 +69,7 @@ function Tweet(obj) {
 
 function extend(dest, src) {
   for (var prop in src) {
-    if (src.hasOwnProperty(dest)) {
+    if (src.hasOwnProperty(prop)) {
       dest[prop] = src[prop]
     }
   }
