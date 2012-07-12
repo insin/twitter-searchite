@@ -78,7 +78,7 @@ function getTweetsById(ids, cb) {
 
 function Tweet(obj, now) {
   this.id = obj.id
-  this.text = twitter.autoLink(twitter.htmlEscape(obj.text))
+  this.text = twitter.autoLink(obj.text)
   // User
   this.user = obj.user
   this.userId = obj.userId
