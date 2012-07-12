@@ -9,6 +9,10 @@ $r.on('error', function (err) {
   console.error('Redis Error: %s', err)
 })
 
+if (settings.redisDatabase) {
+  $r.select(settings.redisDatabase)
+}
+
 var $t = new require('ntwitter')({
   consumer_key: settings.consumerKey
 , consumer_secret: settings.consumerSecret

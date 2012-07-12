@@ -10,6 +10,10 @@ $r.on('error', function (err) {
   console.error('Redis Error: %s', err)
 })
 
+if (settings.redisDatabase) {
+  $r.select(settings.redisDatabase)
+}
+
 var app = express.createServer()
 app.use(app.router)
 app.use(express.errorHandler({showStack: true, dumpExceptions: true}))

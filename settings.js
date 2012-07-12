@@ -5,4 +5,5 @@ module.exports = {
 , accessTokenSecret: ''
 , search: ''
 , pollInterval: 60
+, redisDatabase: 0
 }
