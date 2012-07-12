@@ -6,4 +6,5 @@ module.exports = {
 , search: ''
 , pollInterval: 60
 , redisDatabase: 0
+, tweetsPerPage: 50
 }

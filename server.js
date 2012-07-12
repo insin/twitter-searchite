@@ -37,7 +37,7 @@ app.listen(3000, '0.0.0.0')
 console.log('%s server listening on http://0.0.0.0:3000', settings.search)
 
 function getLatestTweets(options, cb) {
-  var defaultOptions = {start: 0, count: 10}
+  var defaultOptions = {start: 0, count: settings.tweetsPerPage}
   if (typeof options == 'function') {
     cb = options
     options = defaultOptions
