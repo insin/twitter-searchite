@@ -39,16 +39,41 @@ app.helpers({
 })
 
 app.get('/', function index(req, res, next) {
-  getLatestTweets(function(err, tweets) {
+  getTweets(function(err, tweets) {
     if (err) return next(err)
-    res.render('index', {tweets: tweets})
+    res.render('index', {
+      tweets: tweets
+    , pollInterval: settings.pollInterval / 2 * 1000
+    })
+  })
+})
+
+app.get('/new/:last', function index(req, res, next) {
+  $r.hget('tweets:#' + req.params.last, 'ctime', function(err, ctime) {
+    if (err) return next(err)
+    getTweetsSince(+ctime, function(err, tweets) {
+      if (err) return next(err)
+      if (tweets.length) {
+        res.render('tweets', {tweets: tweets}, function(err, html) {
+          if (err) return next(err)
+          res.json({
+            count: tweets.length
+          , html: html
+          , latestTweetId: tweets[0].id
+          })
+        })
+      }
+      else {
+        res.json({count: 0})
+      }
+    })
   })
 })
 
 app.listen(3000, '0.0.0.0')
 console.log('%s server listening on http://0.0.0.0:3000', settings.search)
 
-function getLatestTweets(options, cb) {
+function getTweets(options, cb) {
   var defaultOptions = {start: 0, count: settings.tweetsPerPage}
   if (typeof options == 'function') {
     cb = options
@@ -60,7 +85,16 @@ function getLatestTweets(options, cb) {
 
   var start = options.start
     , stop = options.start + (options.count - 1)
-  $r.zrevrange('tweets.cron', start, stop, function(err, tweetIds) {
+  $r.zrevrange('tweets.cron', start, stop,
+  function(err, tweetIds) {
+    if (err) return cb(err)
+    getTweetsById(tweetIds, cb)
+  })
+}
+
+function getTweetsSince(ctime, cb) {
+  $r.zrevrangebyscore('tweets.cron', '+inf', ctime + 1,
+  function(err, tweetIds) {
     if (err) return cb(err)
     getTweetsById(tweetIds, cb)
   })

@@ -82,6 +82,7 @@ function insertTweet(tweet, cb) {
       , userId: tweet.from_user_id_str
       , avatar: tweet.profile_image_url
       , created: tweet.created_at
+      , ctime: ctime
       }, cb)
     }
   ], cb)

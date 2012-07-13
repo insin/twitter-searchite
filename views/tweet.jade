@@ -1,0 +1,14 @@
+.tweet(data-tweetid='#{tweet.id}')
+  .tweet-header
+    block tweet_header
+      small.time
+        a.tweet-timestamp(title='#{tweet.created}', href='#{tweet.permalink}')
+          span.short-timestamp(data-time='#{tweet.timestamp}')= tweet.ago
+      a.account(href='#{tweet.accountlink}')
+        img.avatar(src='#{tweet.avatar}')
+        span.tweet-username @#{tweet.user}
+  p.tweet-text!= tweet.text
+  .tweet-footer
+    block tweet_footer
+      span.tweet-created= tweet.created
+      span(data-userid='#{tweet.userId}')

@@ -2,29 +2,144 @@ extends base
 
 block extrahead
   style
-    .tweet { margin-bottom: 12px; position: relative; padding-bottom: 6px; border-bottom: 1px solid #eee; }
-    .tweet-header, .tweet-text, .tweet-footer { margin-left: 60px; }
-    .tweet .time { color: #bbb; float: right; margin-top: 1px; }
-    .time a { color: #999; font-size: 12px; }
-    .tweet .avatar { position: absolute; top: 0; left: 0; border-radius: 5px 5px 5px 5px; height: 48px; width: 48px; }
-    .tweet .tweet-username { font-weight: bold; color: #000; }
-    .tweet-header a:hover, .tweet-header a:hover .tweet-username { color: #0088CC; }
-    .tweet-text { margin-bottom: 0; }
-    .tweet-footer { color: #999; font-style: italic; }
+    #new-tweets-bar {
+      position: relative;
+      background-color: #f5f5f5;
+      cursor: pointer;
+      padding: 10px 1px;
+      text-align: center;
+      border-top: 1px solid #ddd;
+      border-bottom: 1px solid #eee;
+    }
+    #tweets {
+      position: relative;
+    }
+    .tweet {
+      position: relative;
+      padding: 10px 1px;
+      border-bottom: 1px solid #eee;
+    }
+    .tweet-header, .tweet-text, .tweet-footer {
+      margin-left: 60px;
+    }
+    .tweet .time {
+      float: right;
+      margin-top: 1px;
+      color: #bbb;
+    }
+    .time a {
+      color: #999;
+      font-size: 12px;
+    }
+    .tweet .avatar {
+      position: absolute;
+      top: 12px;
+      left: 6px;
+      border-radius: 5px;
+      height: 48px;
+      width: 48px;
+    }
+    .tweet .tweet-username {
+      font-weight: bold;
+      color: #000;
+    }
+    .tweet-header a:hover, .tweet-header a:hover .tweet-username {
+      color: #0088CC;
+    }
+    .tweet-text {
+      margin-bottom: 0;
+    }
+    .tweet-footer {
+      color: #999;
+      font-style: italic;
+    }
+
 block content
   .page-header
     h1= search
   .row
     .span6
-      each tweet in tweets
-        .tweet
-          .tweet-header
-            small.time
-              a.tweet-timestamp(title='#{tweet.created}', href='#{tweet.permalink}')
-                span.short-timestamp(data-time='#{tweet.timestamp}')= tweet.ago
-            a.account(href='#{tweet.accountlink}')
-              img.avatar(src='#{tweet.avatar}')
-              span.tweet-username @#{tweet.user}
-          p.tweet-text!= tweet.text
-          .tweet-footer
-            span.tweet-created= tweet.created
+      h2 Tweets
+      #new-tweets-bar
+      #tweets
+        each tweet in tweets
+          include tweet
+
+  latestTweetId = tweets.length ? tweets[0].id : 0
+  script
+    void function() {
+
+    var POLL_INTERVAL = #{pollInterval}
+
+    var newTweetHTML = []
+      , newTweetCount = 0
+      , latestTweetId = '#{latestTweetId}'
+
+    function pluralise(number) {
+      return (number == 1 ? '' : 's')
+    }
+
+    /**
+     * Basic XHR wrapper for GET requests.
+     */
+    function get(url, cb) {
+      var xhr = new XMLHttpRequest()
+      xhr.open('GET', url, true)
+      xhr.onreadystatechange = function(){
+        if (xhr.readyState == 4) {
+          if (xhr.status == 200) {
+            cb(null, xhr.responseText)
+          }
+          else {
+            cb(xhr.responseText)
+          }
+        }
+      }
+      xhr.send(null)
+    }
+
+    function getNewTweets() {
+      get('/new/' + latestTweetId, onNewTweetsReceived)
+    }
+
+    function onNewTweetsReceived(err, response) {
+      if (err) return console.error(err)
+      var obj = JSON.parse(response)
+      if (obj.count) {
+        latestTweetId = obj.latestTweetId
+        newTweetCount += obj.count
+        newTweetHTML.unshift(obj.html)
+        var newTweetsBar = document.getElementById('new-tweets-bar')
+        newTweetsBar.style.display = ''
+        newTweetsBar.innerHTML = newTweetCount + ' new Tweet' + pluralise(newTweetCount)
+      }
+      setTimeout(getNewTweets, POLL_INTERVAL)
+    }
+
+    function showNewTweets() {
+      var tweets = document.getElementById('tweets')
+        , newTweetsBar = document.getElementById('new-tweets-bar')
+        , fragment = document.createDocumentFragment()
+        , div = document.createElement('div')
+      newTweetHTML.forEach(function(html) {
+        div.innerHTML = html
+        while(div.firstChild) {
+          fragment.appendChild(div.firstChild)
+        }
+      })
+      tweets.insertBefore(fragment, tweets.firstChild)
+      newTweetsBar.style.display = 'none'
+      newTweetsBar.innerHTML = '0 new Tweets'
+      newTweetHTML = []
+      newTweetCount = 0
+    }
+
+    // Set up handler for and hide the new tweets bar
+    var newTweetsBar = document.getElementById('new-tweets-bar')
+    newTweetsBar.onclick = showNewTweets
+    newTweetsBar.style.display = 'none'
+
+    // Start polling for new Tweets
+    setTimeout(getNewTweets, POLL_INTERVAL)
+
+    }()
