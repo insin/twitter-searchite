@@ -50,6 +50,11 @@ function onSearchResults(err, search) {
   }
 
   var tweets = search.results
+  if (settings.ignoreRTs) {
+    tweets = tweets.filter(function(tweet) {
+      return (tweet.text.indexOf('RT ') != 0)
+    })
+  }
   console.log('Got %s new Tweet%s', tweets.length, pluralise(tweets.length))
   async.forEach(tweets, insertTweet, function(err) {
     if (err) throw err

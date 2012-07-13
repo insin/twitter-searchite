@@ -7,4 +7,5 @@ module.exports = {
 , pollInterval: 60
 , redisDatabase: 0
 , tweetsPerPage: 50
+, ignoreRTs: true
 }
