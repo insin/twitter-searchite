@@ -29,6 +29,7 @@ if (settings.redisDatabase) {
 
 var app = express.createServer()
 app.use(app.router)
+app.use(express.static(__dirname + '/static'))
 app.use(express.errorHandler({showStack: true, dumpExceptions: true}))
 
 app.set('view engine', 'jade')
@@ -136,7 +137,7 @@ function Tweet(obj, now) {
   var created = moment(obj.created)
   this.created = created.format('h:mm A - DD MMM YY')
   this.timestamp = created.valueOf()
-  this.ago = now.from(created, true)
+  this.ago = created.from(now, true)
   // Links
   this.accountlink = format('https://twitter.com/%s', this.user)
   this.permalink = format('%s/status/%s', this.accountlink, this.id)
