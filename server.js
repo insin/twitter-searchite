@@ -54,7 +54,7 @@ app.get('/new/:last', function index(req, res, next) {
     getTweetsSince(+ctime, function(err, tweets) {
       if (err) return next(err)
       if (tweets.length) {
-        res.render('tweets', {tweets: tweets}, function(err, html) {
+        res.render('new_tweets', {tweets: tweets}, function(err, html) {
           if (err) return next(err)
           res.json({
             count: tweets.length
@@ -67,6 +67,13 @@ app.get('/new/:last', function index(req, res, next) {
         res.json({count: 0})
       }
     })
+  })
+})
+
+app.get('/user/:id', function index(req, res, next) {
+  getTweetsForUser(req.params.id, function(err, tweets) {
+    if (err) return next(err)
+    res.render('user', {tweets: tweets})
   })
 })
 
@@ -94,6 +101,14 @@ function getTweets(options, cb) {
 
 function getTweetsSince(ctime, cb) {
   $r.zrevrangebyscore('tweets.cron', '+inf', ctime + 1,
+  function(err, tweetIds) {
+    if (err) return cb(err)
+    getTweetsById(tweetIds, cb)
+  })
+}
+
+function getTweetsForUser(userId, cb) {
+  $r.zrevrange('user.posted:#' + userId, 0, -1,
   function(err, tweetIds) {
     if (err) return cb(err)
     getTweetsById(tweetIds, cb)
