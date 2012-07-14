@@ -44,13 +44,16 @@ app.get('/', function index(req, res, next) {
     res.render('index', {
       tweets: tweets
     , pollInterval: settings.browserPollInterval * 1000
+    , latestTweetId: tweets.length ? tweets[0].id : 0
+    , earliestTweetId: tweets.length ? tweets[tweets.length - 1].id : 0
     })
   })
 })
 
-app.get('/new/:last', function index(req, res, next) {
-  $r.hget('tweets:#' + req.params.last, 'ctime', function(err, ctime) {
+app.get('/new/:latest', function index(req, res, next) {
+  $r.hget('tweets:#' + req.params.latest, 'ctime', function(err, ctime) {
     if (err) return next(err)
+    if (ctime === null) return res.json({count: 0})
     getTweetsSince(+ctime, function(err, tweets) {
       if (err) return next(err)
       if (tweets.length) {
@@ -60,6 +63,29 @@ app.get('/new/:last', function index(req, res, next) {
             count: tweets.length
           , html: html
           , latestTweetId: tweets[0].id
+          })
+        })
+      }
+      else {
+        res.json({count: 0})
+      }
+    })
+  })
+})
+
+app.get('/page/:earliest', function index(req, res, next) {
+  $r.zrevrank('tweets.cron', req.params.earliest, function(err, tweetIndex) {
+    if (err) return next(err)
+    if (tweetIndex === null) return res.json({count: 0})
+    getTweets({start: tweetIndex + 1}, function(err, tweets) {
+      if (err) return next(err)
+      if (tweets.length) {
+        res.render('new_tweets', {tweets: tweets}, function(err, html) {
+          if (err) return next(err)
+          res.json({
+            count: tweets.length
+          , html: html
+          , earliestTweetId: tweets[tweets.length - 1].id
           })
         })
       }

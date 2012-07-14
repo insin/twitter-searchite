@@ -13,14 +13,15 @@ block content
       #tweets
         each tweet in tweets
           include index_tweet
+      #loading-bar Loading...
     .span6
       #user-tweets
 
-  latestTweetId = tweets.length ? tweets[0].id : 0
   script(src='/js/moment.min.js')
   script
     var context = {
       pollInterval: #{pollInterval}
     , latestTweetId: '#{latestTweetId}'
+    , earliestTweetId: '#{earliestTweetId}'
     }
   script(src='/js/index.js')

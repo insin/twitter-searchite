@@ -8,6 +8,8 @@ var POLL_INTERVAL = context.pollInterval
 var newTweetHTML = []
   , newTweetCount = 0
   , latestTweetId = context.latestTweetId
+  , earliestTweetId = context.earliestTweetId
+  , loadingNextPage = false
 
 function extend(dest, src) {
   for (var prop in src) {
@@ -108,6 +110,35 @@ function getTweetsForUser(userId, tweetEl) {
   })
 }
 
+function getNextPageOfTweets() {
+  loadingNextPage = true
+  var loadingBar = document.getElementById('loading-bar')
+  loadingBar.style.display = ''
+  get('/page/' + earliestTweetId, onNextPageReceived)
+}
+
+function onNextPageReceived(err, response) {
+  var loadingBar = document.getElementById('loading-bar')
+  loadingBar.style.display = 'none'
+  loadingNextPage = false
+  if (err) return console.error(err)
+  var obj = JSON.parse(response)
+  if (obj.count) {
+    earliestTweetId = obj.earliestTweetId
+    var tweets = document.getElementById('tweets')
+      , fragment = document.createDocumentFragment()
+      , div = document.createElement('div')
+      , now = moment()
+    div.innerHTML = obj.html
+    while(div.firstChild) {
+      updateTweetTimestamp(div.firstChild, now)
+      registerTweetEventHandlers(div.firstChild)
+      fragment.appendChild(div.firstChild)
+    }
+    tweets.appendChild(fragment)
+  }
+}
+
 function updateTweetTimestamps() {
   var tweets = document.querySelectorAll('.tweet')
     , now = moment()
@@ -138,6 +169,22 @@ function registerTweetEventHandlers(tweetEl) {
 var newTweetsBar = document.getElementById('new-tweets-bar')
 newTweetsBar.onclick = showNewTweets
 newTweetsBar.style.display = 'none'
+
+// Set up infinite scroll handler
+var loadingBar = document.getElementById('loading-bar')
+loadingBar.style.display = 'none'
+
+window.onscroll = function() {
+  var html = document.querySelector('html')
+    , body = document.body
+  return function() {
+    if (loadingNextPage) return
+    var scroll = (html.scrollTop || body.scrollTop) + window.innerHeight
+    if (scroll === body.scrollHeight) {
+      getNextPageOfTweets()
+    }
+  }
+}()
 
 // Add 'All Tweets' controls to initial Tweets
 var initialTweets = document.querySelectorAll('#tweets .tweet')
