@@ -5,10 +5,12 @@ var forEach = Array.prototype.forEach
 var POLL_INTERVAL = context.pollInterval
   , TIMESTAMP_UPDATE_INTERVAL = 60000
 
+var latestTweetId = context.latestTweetId
+  , earliestTweetId = context.earliestTweetId
+  , infiniteScroll = context.infiniteScroll
+
 var newTweetHTML = []
   , newTweetCount = 0
-  , latestTweetId = context.latestTweetId
-  , earliestTweetId = context.earliestTweetId
   , loadingNextPage = false
 
 function extend(dest, src) {
@@ -114,17 +116,28 @@ function getNextPageOfTweets() {
   loadingNextPage = true
   var loadingBar = document.getElementById('loading-bar')
   loadingBar.style.display = ''
+  if (!infiniteScroll) {
+    var moreTweets = document.getElementById('more-tweets')
+    moreTweets.style.display = 'none'
+  }
   get('/page/' + earliestTweetId, onNextPageReceived)
 }
 
 function onNextPageReceived(err, response) {
+  // Undo loading status
+  loadingNextPage = false
   var loadingBar = document.getElementById('loading-bar')
   loadingBar.style.display = 'none'
-  loadingNextPage = false
+  if (!infiniteScroll) {
+    var moreTweets = document.getElementById('more-tweets')
+    moreTweets.style.display = ''
+  }
+
   if (err) return console.error(err)
   var obj = JSON.parse(response)
   if (obj.count) {
     earliestTweetId = obj.earliestTweetId
+    // Display the new Tweets
     var tweets = document.getElementById('tweets')
       , fragment = document.createDocumentFragment()
       , div = document.createElement('div')
@@ -136,6 +149,10 @@ function onNextPageReceived(err, response) {
       fragment.appendChild(div.firstChild)
     }
     tweets.appendChild(fragment)
+  }
+  else if (!infiniteScroll) {
+    // Keep the More Tweets bar hidden if we didn't get any more Tweets
+    moreTweets.style.display = 'none'
   }
 }
 
@@ -170,21 +187,27 @@ var newTweetsBar = document.getElementById('new-tweets-bar')
 newTweetsBar.onclick = showNewTweets
 newTweetsBar.style.display = 'none'
 
-// Set up infinite scroll handler
+// Set up paging
 var loadingBar = document.getElementById('loading-bar')
 loadingBar.style.display = 'none'
 
-window.onscroll = function() {
-  var html = document.querySelector('html')
-    , body = document.body
-  return function() {
-    if (loadingNextPage) return
-    var scroll = (html.scrollTop || body.scrollTop) + window.innerHeight
-    if (body.scrollHeight - scroll < 5) {
-      getNextPageOfTweets()
+if (infiniteScroll) {
+  window.onscroll = function() {
+    var html = document.querySelector('html')
+      , body = document.body
+    return function() {
+      if (loadingNextPage) return
+      var scroll = (html.scrollTop || body.scrollTop) + window.innerHeight
+      if (body.scrollHeight - scroll < 5) {
+        getNextPageOfTweets()
+      }
     }
-  }
-}()
+  }()
+}
+else {
+  var moreTweets = document.getElementById('more-tweets')
+  moreTweets.onclick = getNextPageOfTweets
+}
 
 // Add 'All Tweets' controls to initial Tweets
 var initialTweets = document.querySelectorAll('#tweets .tweet')

@@ -13,6 +13,8 @@ block content
       #tweets
         each tweet in tweets
           include index_tweet
+      if (!infiniteScroll)
+        #more-tweets More Tweets
       #loading-bar Loading...
     .span6
       #user-tweets
@@ -23,5 +25,6 @@ block content
       pollInterval: #{pollInterval}
     , latestTweetId: '#{latestTweetId}'
     , earliestTweetId: '#{earliestTweetId}'
+    , infiniteScroll: #{infiniteScroll}
     }
   script(src='/js/index.js')

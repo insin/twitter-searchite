@@ -46,6 +46,7 @@ app.get('/', function index(req, res, next) {
     , pollInterval: settings.browserPollInterval * 1000
     , latestTweetId: tweets.length ? tweets[0].id : 0
     , earliestTweetId: tweets.length ? tweets[tweets.length - 1].id : 0
+    , infiniteScroll: settings.infiniteScroll
     })
   })
 })

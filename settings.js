@@ -28,4 +28,6 @@ module.exports = {
 , tweetsPerPage: 50
   // Wait time between XHR calls checking for new Tweets (seconds)
 , browserPollInterval: 30
+  // Use infinite scrolling? If not, a More Tweets control will be displayed
+, infiniteScroll: false
 }
