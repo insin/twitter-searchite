@@ -14,11 +14,28 @@ var $t = new require('ntwitter')({
 , access_token_secret: settings.accessTokenSecret
 })
 
-// Start polling
-getNewTweets()
+var timeoutId = null
+  , polling = false
+
+function start() {
+  polling = true
+  getNewTweets()
+}
+
+function stop() {
+  if (timeoutId !== null) {
+    clearTimeout(timeoutId)
+    timeoutId = null
+  }
+  polling = false
+}
+
+function isPolling() {
+  return polling
+}
 
 function wait() {
-  setTimeout(getNewTweets, settings.pollInterval * 1000)
+  timeoutId = setTimeout(getNewTweets, settings.pollInterval * 1000)
   console.log('Waiting for %ss...', settings.pollInterval)
 }
 
@@ -84,4 +101,15 @@ function insertTweet(tweet, cb) {
       }, cb)
     }
   ], cb)
+}
+
+module.exports = {
+  start: start
+, stop: stop
+, isPolling: isPolling
+}
+
+// Allow starting via `node poller.js`
+if (require.main === module) {
+  start()
 }

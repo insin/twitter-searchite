@@ -24,9 +24,8 @@ Usage
 
 #. Start ``redis-server``.
 
-#. ``node poller.js`` to start polling for Tweets.
-
-#. ``node server.js`` to serve up a site which uses the Tweets.
+#. ``node server.js`` to start polling for Tweets and serve up a site which uses
+   the Tweets.
 
 #. Hack.
 

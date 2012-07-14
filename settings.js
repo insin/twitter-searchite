@@ -5,6 +5,7 @@ module.exports = {
 , accessTokenSecret: ''
 , search: ''
 , pollInterval: 60
+, serverPoll: true
 , redisPort: 6379
 , redisHost: '127.0.0.1'
 , redisDatabase: 0

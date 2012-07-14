@@ -7,6 +7,12 @@ var express = require('express')
 var settings = require('./settings')
   , redis = require('./redis')
   , extend = require('./utils').extend
+  , poller = require('./poller')
+
+if (settings.serverPoll) {
+  console.log('Starting poller...')
+  poller.start()
+}
 
 // Replace moment's time-ago format strings with shorter representations
 extend(moment.relativeTime, {
