@@ -11,4 +11,5 @@ module.exports = {
 , redisAuth: false
 , tweetsPerPage: 50
 , ignoreRTs: true
+, browserPollInterval: 30
 }

@@ -37,7 +37,7 @@ app.get('/', function index(req, res, next) {
     if (err) return next(err)
     res.render('index', {
       tweets: tweets
-    , pollInterval: settings.pollInterval / 2 * 1000
+    , pollInterval: settings.browserPollInterval * 1000
     })
   })
 })
