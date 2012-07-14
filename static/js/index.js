@@ -101,6 +101,9 @@ function getTweetsForUser(userId, tweetEl) {
     }
     else {
       userTweets.innerHTML = response
+      userTweets.querySelector('button.close').onclick = function() {
+        userTweets.innerHTML = ''
+      }
     }
   })
 }

@@ -1,5 +1,7 @@
 firstTweet = tweets[0]
 user = firstTweet.user
-h2 Tweets from @#{user}
+h2
+  button.close.pull-right(title='Close') &times;
+  | Tweets from @#{user}
 for tweet in tweets
   include tweet
