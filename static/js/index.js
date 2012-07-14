@@ -180,7 +180,7 @@ window.onscroll = function() {
   return function() {
     if (loadingNextPage) return
     var scroll = (html.scrollTop || body.scrollTop) + window.innerHeight
-    if (scroll === body.scrollHeight) {
+    if (body.scrollHeight - scroll < 5) {
       getNextPageOfTweets()
     }
   }
