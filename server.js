@@ -5,6 +5,7 @@ var express = require('express')
   , moment = require('moment')
 
 var settings = require('./settings')
+  , redis = require('./redis')
   , extend = require('./utils').extend
 
 // Replace moment's time-ago format strings with shorter representations
@@ -17,15 +18,7 @@ extend(moment.relativeTime, {
 , y: '1y', yy: '%dy'
 })
 
-var $r = require('redis').createClient()
-
-$r.on('error', function (err) {
-  console.error('Redis Error: %s', err)
-})
-
-if (settings.redisDatabase) {
-  $r.select(settings.redisDatabase)
-}
+var $r = redis.connect()
 
 var app = express.createServer()
 app.use(app.router)

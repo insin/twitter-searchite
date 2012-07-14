@@ -2,17 +2,10 @@ var async = require('async')
   , moment = require('moment')
 
 var settings = require('./settings')
+  , redis = require('./redis')
   , pluralise = require('./utils').pluralise
 
-var $r = require('redis').createClient()
-
-$r.on('error', function (err) {
-  console.error('Redis Error: %s', err)
-})
-
-if (settings.redisDatabase) {
-  $r.select(settings.redisDatabase)
-}
+var $r = redis.connect()
 
 var $t = new require('ntwitter')({
   consumer_key: settings.consumerKey
