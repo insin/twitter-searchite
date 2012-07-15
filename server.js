@@ -38,6 +38,11 @@ app.helpers({
 , version: require('./package.json').version
 })
 
+// ------------------------------------------------------------ URL Handlers ---
+
+/**
+ * Index page.
+ */
 app.get('/', function index(req, res, next) {
   getTweets(function(err, tweets) {
     if (err) return next(err)
@@ -51,52 +56,45 @@ app.get('/', function index(req, res, next) {
   })
 })
 
+/**
+ * Helper for rendering new tweets as a JSON response to XHR.
+ */
+function renderNewTweets(res, next, tweets, additionalContext) {
+  res.render('new_tweets', {tweets: tweets}, function(err, html) {
+    if (err) return next(err)
+    res.json(extend({count: tweets.length, html: html}, additionalContext))
+  })
+}
+
+/**
+ * New Tweets (XHR)
+ */
 app.get('/new/:latest', function index(req, res, next) {
-  $r.hget('tweets:#' + req.params.latest, 'ctime', function(err, ctime) {
+  getTweetsSince(req.params.latest, function(err, tweets) {
     if (err) return next(err)
-    if (ctime === null) return res.json({count: 0})
-    getTweetsSince(+ctime, function(err, tweets) {
-      if (err) return next(err)
-      if (tweets.length) {
-        res.render('new_tweets', {tweets: tweets}, function(err, html) {
-          if (err) return next(err)
-          res.json({
-            count: tweets.length
-          , html: html
-          , latestTweetId: tweets[0].id
-          })
-        })
-      }
-      else {
-        res.json({count: 0})
-      }
+    if (!tweets.length) return res.json({count: 0})
+    renderNewTweets(res, next, tweets, {
+      latestTweetId: tweets[0].id
     })
   })
 })
 
+/**
+ * Previous page of Tweets (XHR)
+ */
 app.get('/page/:earliest', function index(req, res, next) {
-  $r.zrevrank('tweets.cron', req.params.earliest, function(err, tweetIndex) {
+  getTweetsPriorTo(req.params.earliest, function(err, tweets) {
     if (err) return next(err)
-    if (tweetIndex === null) return res.json({count: 0})
-    getTweets({start: tweetIndex + 1}, function(err, tweets) {
-      if (err) return next(err)
-      if (tweets.length) {
-        res.render('new_tweets', {tweets: tweets}, function(err, html) {
-          if (err) return next(err)
-          res.json({
-            count: tweets.length
-          , html: html
-          , earliestTweetId: tweets[tweets.length - 1].id
-          })
-        })
-      }
-      else {
-        res.json({count: 0})
-      }
+    if (!tweets.length) return res.json({count: 0})
+    renderNewTweets(res, next, tweets, {
+      earliestTweetId: tweets[tweets.length - 1].id
     })
   })
 })
 
+/**
+ * User Tweets (XHR)
+ */
 app.get('/user/:id', function index(req, res, next) {
   getTweetsForUser(req.params.id, function(err, tweets) {
     if (err) return next(err)
@@ -107,6 +105,12 @@ app.get('/user/:id', function index(req, res, next) {
 app.listen(3000, '0.0.0.0')
 console.log('%s server listening on http://0.0.0.0:3000', settings.search)
 
+// --------------------------------------------------------- Redis/Tweet API ---
+
+/**
+ * Retrieve a page of Tweets in reverse chronological order by start index &
+ * count.
+ */
 function getTweets(options, cb) {
   var defaultOptions = {start: 0, count: settings.tweetsPerPage}
   if (typeof options == 'function') {
@@ -119,29 +123,49 @@ function getTweets(options, cb) {
 
   var start = options.start
     , stop = options.start + (options.count - 1)
-  $r.zrevrange('tweets.cron', start, stop,
-  function(err, tweetIds) {
+  $r.zrevrange('tweets.cron', start, stop, function(err, tweetIds) {
     if (err) return cb(err)
     getTweetsById(tweetIds, cb)
   })
 }
 
-function getTweetsSince(ctime, cb) {
-  $r.zrevrangebyscore('tweets.cron', '+inf', ctime + 1,
-  function(err, tweetIds) {
+/**
+ * Retrieve a page of Tweets prior to the given Tweet.
+ */
+function getTweetsPriorTo(tweetId, cb) {
+  $r.zrevrank('tweets.cron', tweetId, function(err, tweetIndex) {
     if (err) return cb(err)
-    getTweetsById(tweetIds, cb)
+    // Invalid tweet id
+    if (tweetIndex === null) return cb(null, [])
+    getTweets({start: tweetIndex + 1}, cb)
   })
 }
 
+/**
+ * Retrieve all Tweets since the given Tweet.
+ */
+function getTweetsSince(tweetId, cb) {
+  $r.zrevrank('tweets.cron', tweetId, function(err, tweetIndex) {
+    if (err) return cb(err)
+    // Invalid tweet id or first tweet id
+    if (tweetIndex === null || tweetIndex === 0) return cb(null, [])
+    getTweets({start: 0, count: tweetIndex}, cb)
+  })
+}
+
+/**
+ * Retrieve all Tweets for the given user.
+ */
 function getTweetsForUser(userId, cb) {
-  $r.zrevrange('user.posted:#' + userId, 0, -1,
-  function(err, tweetIds) {
+  $r.zrevrange('user.posted:#' + userId, 0, -1, function(err, tweetIds) {
     if (err) return cb(err)
     getTweetsById(tweetIds, cb)
   })
 }
 
+/**
+ * Retrieve all Tweets with the given ids.
+ */
 function getTweetsById(ids, cb) {
   var multi = $r.multi()
     , now = moment()
