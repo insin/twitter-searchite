@@ -59,10 +59,16 @@ app.get('/', function index(req, res, next) {
 /**
  * Helper for rendering new tweets as a JSON response to XHR.
  */
-function renderNewTweets(res, next, tweets, additionalContext) {
+function renderNewTweets(res, next, tweets) {
+  if (!tweets.length) return res.json({count: 0})
   res.render('new_tweets', {tweets: tweets}, function(err, html) {
     if (err) return next(err)
-    res.json(extend({count: tweets.length, html: html}, additionalContext))
+    res.json({
+      count: tweets.length
+    , html: html
+    , latestTweetId: tweets[0].id
+    , earliestTweetId: tweets[tweets.length - 1].id
+    })
   })
 }
 
@@ -72,10 +78,7 @@ function renderNewTweets(res, next, tweets, additionalContext) {
 app.get('/new/:latest', function index(req, res, next) {
   getTweetsSince(req.params.latest, function(err, tweets) {
     if (err) return next(err)
-    if (!tweets.length) return res.json({count: 0})
-    renderNewTweets(res, next, tweets, {
-      latestTweetId: tweets[0].id
-    })
+    renderNewTweets(res, next, tweets)
   })
 })
 
@@ -85,10 +88,7 @@ app.get('/new/:latest', function index(req, res, next) {
 app.get('/page/:earliest', function index(req, res, next) {
   getTweetsPriorTo(req.params.earliest, function(err, tweets) {
     if (err) return next(err)
-    if (!tweets.length) return res.json({count: 0})
-    renderNewTweets(res, next, tweets, {
-      earliestTweetId: tweets[tweets.length - 1].id
-    })
+    renderNewTweets(res, next, tweets)
   })
 })
 
