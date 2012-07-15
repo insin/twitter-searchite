@@ -1,7 +1,6 @@
 var express = require('express')
 
 var settings = require('./settings')
-  , extend = require('./utils').extend
   , poller = require('./poller')
   , redisTweets = require('./tweets')
 
