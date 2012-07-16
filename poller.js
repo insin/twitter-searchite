@@ -64,9 +64,14 @@ function onSearchResults(err, search) {
 
   var tweets = search.results
   if (settings.ignoreRTs) {
+    var tweetCount = tweets.length
     tweets = tweets.filter(function(tweet) {
       return (tweet.text.indexOf('RT ') != 0)
     })
+    var filtered = tweetCount - tweets.length
+    if (filtered) {
+      console.log('Filtered out ' + filtered + ' RT' + pluralise(filtered))
+    }
   }
   console.log('Got %s new Tweet%s', tweets.length, pluralise(tweets.length))
   async.forEach(tweets, redisTweets.store, function(err) {
