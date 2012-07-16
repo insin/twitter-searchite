@@ -11,6 +11,7 @@
   , "twitter-text": "~1.5.0"
   , "redis": "~0.7.2"
   , "jade": "~0.26.3"
+  , "socket.io": "~0.9.6"
   }
 , "repository": {
     "type": "git"
