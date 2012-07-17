@@ -17,11 +17,6 @@ Usage
 
 #. Edit `settings.js`_.
 
-   If you have keys for a Twitter app you want to use, plug 'em in, but the
-   Twitter `Search API`_ doesn't require authentication.
-
-   Add the search text you want to use to the search setting.
-
 #. Start ``redis-server``.
 
 #. ``node server.js`` to start polling for Tweets and serve up a site which uses
