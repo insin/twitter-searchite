@@ -7,7 +7,7 @@ var settings = require('./settings')
 module.exports = {
   start: start
 , stop: stop
-, isPolling: isPolling
+, running: function() { return running }
 }
 
 var $t = new require('ntwitter')({
@@ -17,12 +17,14 @@ var $t = new require('ntwitter')({
 , access_token_secret: settings.accessTokenSecret
 })
 
-var timeoutId = null
-  , polling = false
+var running = false
+  , timeoutId = null
+  , activeStream = null
 
 function start() {
-  polling = true
-  getNewTweets()
+  console.log('Poller starting...')
+  running = true
+  searchForNewTweets()
 }
 
 function stop() {
@@ -30,23 +32,29 @@ function stop() {
     clearTimeout(timeoutId)
     timeoutId = null
   }
-  polling = false
+  if (activeStream !== null) {
+    activeStream.destroy()
+    activeStream = null
+  }
+  stopped()
 }
 
-function isPolling() {
-  return polling
+function stopped() {
+  running = false
+  activeStream = null
+  console.log('Poller stopped.')
 }
 
 function wait() {
-  timeoutId = setTimeout(getNewTweets, settings.pollInterval * 1000)
+  timeoutId = setTimeout(searchForNewTweets, settings.pollInterval * 1000)
   console.log('Waiting for %ss...', settings.pollInterval)
 }
 
-function getNewTweets() {
+function searchForNewTweets() {
   redisTweets.maxId(function(err, sinceId) {
     if (err) throw err
     sinceId = sinceId || 0
-    console.log('Searching for %s Tweets since #%s', settings.search, sinceId)
+    console.log('Searching for "%s" Tweets since #%s...', settings.search, sinceId)
     $t.search(settings.search, {
       rpp: 100
     , result_type: 'recent'
@@ -59,7 +67,7 @@ function onSearchResults(err, search) {
   if (err) throw err
   if (!search.results.length) {
     console.log('No new tweets found.')
-    return wait()
+    return startStreaming()
   }
 
   var tweets = search.results
@@ -69,17 +77,57 @@ function onSearchResults(err, search) {
       return (tweet.text.indexOf('RT ') != 0)
     })
     var filtered = tweetCount - tweets.length
-    if (filtered) {
-      console.log('Filtered out ' + filtered + ' RT' + pluralise(filtered))
-    }
   }
   console.log('Got %s new Tweet%s', tweets.length, pluralise(tweets.length))
-  async.forEach(tweets, redisTweets.store, function(err) {
+  if (filtered) {
+    console.log('(Filtered out %s RT%s)', filtered, pluralise(filtered))
+  }
+  async.forEach(tweets, redisTweets.storeSearch, function(err) {
     if (err) throw err
     redisTweets.maxId(search.max_id_str, function(err) {
       if (err) throw err
-      wait()
+      startStreaming()
     })
+  })
+}
+
+function startStreaming() {
+  console.log('Streaming Tweets with filter "%s"...', settings.stream)
+  $t.verifyCredentials(function(err, data) {
+    if (err) {
+      console.log('Error verifying credentials: %s', err)
+      return stop()
+    }
+
+    $t.stream('statuses/filter', {'track': settings.stream}, function(stream) {
+      activeStream = stream
+
+      stream.on('data', onStreamedTweet)
+
+      stream.on('error', function(err) {
+        console.error('Error from Tweet stream: %s', err)
+        stopped()
+      })
+
+      stream.on('destroy', function(data) {
+        console.log('Stream destroyed: %s', data)
+        stopped()
+      })
+    })
+  })
+}
+
+function onStreamedTweet(tweet) {
+  if (settings.ignoreRTs && tweet.text.indexOf('RT ') == 0) {
+    console.log('Filtered out RT: ' + tweet.text)
+    return
+  }
+
+  redisTweets.storeStream(tweet, function(err) {
+    if (err) {
+      console.log('Error storing Tweet: %s', err)
+      return stop()
+    }
   })
 }
 

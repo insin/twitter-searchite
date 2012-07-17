@@ -1,6 +1,5 @@
 module.exports = {
 // Twitter
-  // App and auth settings are currently optional
   consumerKey: ''
 , consumerSecret: ''
 , accessToken: ''
@@ -9,6 +8,8 @@ module.exports = {
 // Poller
   // Search text
 , search: '#nodejs OR Node.js'
+  // Stream filter
+, stream: '#nodejs,Node.js'
   // Wait time between Search API calls checking for new Tweets (seconds)
 , pollInterval: 60
   // Should the server start the poller?

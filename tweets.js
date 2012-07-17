@@ -6,7 +6,8 @@ var settings = require('./settings')
   , redis = require('./redis')
 
 module.exports = {
-  store: store
+  storeSearch: storeSearch
+, storeStream: storeStream
 , maxId: maxId
 , get: get
 , byId: byId
@@ -27,28 +28,51 @@ extend(moment.relativeTime, {
 , y: '1y', yy: '%dy'
 })
 
+function storeSearch(data, cb) {
+  var created = moment(data.created_at)
+  var tweet = {
+    id: data.id_str
+  , text: data.text
+  , user: data.from_user
+  , userId: data.from_user_id_str
+  , avatar: data.profile_image_url
+  , created: created.format('h:mm A - DD MMM YY')
+  , ctime: created.valueOf()
+  }
+  store(tweet, {source: 'search'}, cb)
+}
+
+function storeStream(data, cb) {
+  var created = moment(data.created_at)
+  var tweet = {
+    id: data.id_str
+  , text: data.text
+  , user: data.user.screen_name
+  , userId: data.user.id_str
+  , avatar: data.user.profile_image_url
+  , created: created.format('h:mm A - DD MMM YY')
+  , ctime: created.valueOf()
+  }
+  store(tweet, {source: 'stream', storeMaxId: true}, cb)
+}
+
 /**
  * Stores (presumed) new Tweet data.
  */
-function store(tweet, cb) {
-  var created = moment(tweet.created_at)
-    , ctime = created.valueOf()
-  console.log('[%s] %s: %s', created.format('HH:mm'), tweet.from_user, tweet.text)
+function store(tweet, options, cb) {
+  options = extend({storeMaxId: false}, options)
+  console.log('(%s) [%s] %s: %s', options.source, moment(+tweet.ctime).format('HH:mm'), tweet.user, tweet.text)
   var multi = $r.multi()
   // Add Tweet id to chronological view
-  multi.zadd('tweets.cron', ctime, tweet.id_str)
+  multi.zadd('tweets.cron', tweet.ctime, tweet.id)
   // Add Tweet id to the user's chronological view
-  multi.zadd('user.posted:#' + tweet.from_user_id_str, ctime, tweet.id_str)
+  multi.zadd('user.posted:#' + tweet.userId, tweet.ctime, tweet.id)
   // Store Tweet details
-  multi.hmset('tweets:#' + tweet.id_str, {
-    id: tweet.id_str
-  , text: tweet.text
-  , user: tweet.from_user
-  , userId: tweet.from_user_id_str
-  , avatar: tweet.profile_image_url
-  , created: created.format('h:mm A - DD MMM YY')
-  , ctime: ctime
-  })
+  multi.hmset('tweets:#' + tweet.id, tweet)
+  // Store Tweet id as the max id, if requested
+  if (options.storeMaxId) {
+    multi.set('since', tweet.id)
+  }
   multi.exec(cb)
 }
 
