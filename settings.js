@@ -12,8 +12,6 @@ module.exports = {
 , stream: '#nodejs,Node.js'
   // Wait time between Search API calls checking for new Tweets (seconds)
 , pollInterval: 60
-  // Should the server start the poller?
-, serverPoll: true
   // Should the poller ignore Tweets which appear to be RTs?
 , ignoreRTs: true
 
@@ -27,8 +25,10 @@ module.exports = {
 // Frontend
   // Number of Tweets per page
 , tweetsPerPage: 50
-  // Wait time between XHR calls checking for new Tweets (seconds)
-, browserPollInterval: 30
-  // Use infinite scrolling? If not, a More Tweets control will be displayed
+  // (true) Use infinite scrolling
+  // (false) Show the More Tweets bar
 , infiniteScroll: false
+  // (true) Automatically display new Tweets
+  // (false) Show the New Tweets bar
+, autoDisplayNew: true
 }

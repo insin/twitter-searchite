@@ -53,7 +53,10 @@ function storeStream(data, cb) {
   , created: created.format('h:mm A - DD MMM YY')
   , ctime: created.valueOf()
   }
-  store(tweet, {source: 'stream', storeMaxId: true}, cb)
+  store(tweet, {source: 'stream', storeMaxId: true}, function(err) {
+    if (err) return cb(err)
+    cb(null, tweetDisplay(tweet))
+  })
 }
 
 /**

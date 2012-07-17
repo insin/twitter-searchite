@@ -2,12 +2,12 @@ void function() {
 
 var forEach = Array.prototype.forEach
 
-var POLL_INTERVAL = context.pollInterval
-  , TIMESTAMP_UPDATE_INTERVAL = 60000
+var TIMESTAMP_UPDATE_INTERVAL = 30000
 
 var latestTweetId = context.latestTweetId
   , earliestTweetId = context.earliestTweetId
   , infiniteScroll = context.infiniteScroll
+  , autoDisplayNew = context.autoDisplayNew
 
 var newTweetHTML = []
   , newTweetCount = 0
@@ -54,22 +54,28 @@ function get(url, cb) {
   xhr.send(null)
 }
 
-function getNewTweets() {
-  get('/new/' + latestTweetId, onNewTweetsReceived)
-}
+// -------------------------------------------------------------- New Tweets ---
 
-function onNewTweetsReceived(err, response) {
-  if (err) return console.error(err)
-  var obj = JSON.parse(response)
-  if (obj.count) {
-    latestTweetId = obj.latestTweetId
-    newTweetCount += obj.count
-    newTweetHTML.unshift(obj.html)
+function onTweetReceived(tweet) {
+  latestTweetId = tweet.latestTweetId
+  if (!autoDisplayNew) {
+    newTweetCount++
+    newTweetHTML.unshift(tweet.html)
     var newTweetsBar = document.getElementById('new-tweets-bar')
     newTweetsBar.style.display = ''
     newTweetsBar.innerHTML = newTweetCount + ' new Tweet' + pluralise(newTweetCount)
+    return
   }
-  setTimeout(getNewTweets, POLL_INTERVAL)
+  var tweets = document.getElementById('tweets')
+    , fragment = document.createDocumentFragment()
+    , div = document.createElement('div')
+    , now = moment()
+  div.innerHTML = tweet.html
+  while(div.firstChild) {
+    registerTweetEventHandlers(div.firstChild)
+    fragment.appendChild(div.firstChild)
+  }
+  tweets.insertBefore(fragment, tweets.firstChild)
 }
 
 function showNewTweets() {
@@ -78,20 +84,35 @@ function showNewTweets() {
     , fragment = document.createDocumentFragment()
     , div = document.createElement('div')
     , now = moment()
-  newTweetHTML.forEach(function(html) {
-    div.innerHTML = html
-    while(div.firstChild) {
-      updateTweetTimestamp(div.firstChild, now)
-      registerTweetEventHandlers(div.firstChild)
-      fragment.appendChild(div.firstChild)
-    }
-  })
+  div.innerHTML = newTweetHTML.join('')
+  while(div.firstChild) {
+    updateTweetTimestamp(div.firstChild, now)
+    registerTweetEventHandlers(div.firstChild)
+    fragment.appendChild(div.firstChild)
+  }
   tweets.insertBefore(fragment, tweets.firstChild)
   newTweetsBar.style.display = 'none'
   newTweetsBar.innerHTML = '0 new Tweets'
   newTweetHTML = []
   newTweetCount = 0
 }
+
+function registerTweetEventHandlers(tweetEl) {
+  var span = tweetEl.querySelector('span[data-userid]')
+    , userId = span.getAttribute('data-userid')
+  span.parentNode.insertBefore(document.createTextNode(' · '), span)
+  span.appendChild(document.createTextNode('All Tweets'))
+  span.onclick = getTweetsForUser.bind(null, userId, tweetEl)
+}
+
+function toggleAutoDisplayNew() {
+  autoDisplayNew = this.checked
+  if (autoDisplayNew && newTweetCount) {
+    showNewTweets()
+  }
+}
+
+// ------------------------------------------------------------- User Tweets ---
 
 function getTweetsForUser(userId, tweetEl) {
   var userTweets = document.getElementById('user-tweets')
@@ -111,6 +132,8 @@ function getTweetsForUser(userId, tweetEl) {
     }
   })
 }
+
+// -------------------------------------------------------------- Pagination ---
 
 function getNextPageOfTweets() {
   loadingNextPage = true
@@ -156,6 +179,8 @@ function onNextPageReceived(err, response) {
   }
 }
 
+// ------------------------------------------------------ Timestamp Updating ---
+
 function updateTweetTimestamps() {
   var tweets = document.querySelectorAll('.tweet')
     , now = moment()
@@ -174,13 +199,7 @@ function updateTweetTimestamp(tweet, now) {
   }
 }
 
-function registerTweetEventHandlers(tweetEl) {
-  var span = tweetEl.querySelector('span[data-userid]')
-    , userId = span.getAttribute('data-userid')
-  span.parentNode.insertBefore(document.createTextNode(' · '), span)
-  span.appendChild(document.createTextNode('All Tweets'))
-  span.onclick = getTweetsForUser.bind(null, userId, tweetEl)
-}
+// ---------------------------------------------------------- Initialisation ---
 
 // Set up handler for and hide the new tweets bar
 var newTweetsBar = document.getElementById('new-tweets-bar')
@@ -213,9 +232,13 @@ else {
 var initialTweets = document.querySelectorAll('#tweets .tweet')
 forEach.call(initialTweets, registerTweetEventHandlers)
 
-// Start polling for new Tweets
-setTimeout(getNewTweets, POLL_INTERVAL)
-// Update Tweet timestamps once a minute
+// Listen for new Tweets
+var autoDisplayInput = document.getElementById('auto-display-new')
+autoDisplayInput.onclick = toggleAutoDisplayNew
+var socket = io.connect('/')
+socket.on('tweet', onTweetReceived)
+
+// Update Tweet timestamps periodically
 setTimeout(updateTweetTimestamps, TIMESTAMP_UPDATE_INTERVAL)
 
 }()

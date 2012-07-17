@@ -1,3 +1,5 @@
+var EventEmitter = require('events').EventEmitter
+
 var async = require('async')
 
 var settings = require('./settings')
@@ -8,6 +10,7 @@ module.exports = {
   start: start
 , stop: stop
 , running: function() { return running }
+, on: function(event, fn) { ee.on(event, fn) }
 }
 
 var $t = new require('ntwitter')({
@@ -20,6 +23,7 @@ var $t = new require('ntwitter')({
 var running = false
   , timeoutId = null
   , activeStream = null
+  , ee = new EventEmitter()
 
 function start() {
   console.log('Poller starting...')
@@ -123,11 +127,12 @@ function onStreamedTweet(tweet) {
     return
   }
 
-  redisTweets.storeStream(tweet, function(err) {
+  redisTweets.storeStream(tweet, function(err, storedTweet) {
     if (err) {
       console.log('Error storing Tweet: %s', err)
       return stop()
     }
+    ee.emit('tweet', storedTweet)
   })
 }
 

@@ -1,15 +1,12 @@
 var express = require('express')
+  , jade = require('jade')
+  , app = express.createServer()
+  , io = require('socket.io').listen(app)
 
 var settings = require('./settings')
   , poller = require('./poller')
   , redisTweets = require('./tweets')
 
-if (settings.serverPoll) {
-  console.log('Starting poller...')
-  poller.start()
-}
-
-var app = express.createServer()
 app.use(app.router)
 app.use(express.static(__dirname + '/static'))
 app.use(express.errorHandler({showStack: true, dumpExceptions: true}))
@@ -20,6 +17,8 @@ app.helpers({
   search: settings.search
 , version: require('./package.json').version
 })
+
+// ------------------------------------------------------------ URL Handlers ---
 
 /**
  * Index page.
@@ -33,6 +32,7 @@ app.get('/', function index(req, res, next) {
     , latestTweetId: tweets.length ? tweets[0].id : 0
     , earliestTweetId: tweets.length ? tweets[tweets.length - 1].id : 0
     , infiniteScroll: settings.infiniteScroll
+    , autoDisplayNew: settings.autoDisplayNew
     })
   })
 })
@@ -83,5 +83,17 @@ app.get('/user/:id', function index(req, res, next) {
   })
 })
 
+// ---------------------------------------------------------- Poller Handler ---
+
+poller.on('tweet', function(tweet) {
+  jade.renderFile('views/index_tweet.jade', {cache: true, tweet: tweet}, function(err, html) {
+    if (err) throw err
+    io.sockets.emit('tweet', {latestTweetId: tweet.id, html: html})
+  })
+})
+
+// ----------------------------------------------------------------- Startup ---
+
 app.listen(3000, '0.0.0.0')
 console.log('%s server listening on http://0.0.0.0:3000', settings.search)
+poller.start()

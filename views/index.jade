@@ -8,7 +8,11 @@ block content
     h1= search
   .row
     .span6
-      h2 Tweets
+      h2
+        label.pull-right
+          input#auto-display-new(type='checkbox', checked=autoDisplayNew)
+          |  Auto Display New
+        | Tweets
       #new-tweets-bar
       #tweets
         each tweet in tweets
@@ -20,11 +24,13 @@ block content
       #user-tweets
 
   script(src='/js/moment.min.js')
+  script(src='/socket.io/socket.io.js')
   script
     var context = {
       pollInterval: #{pollInterval}
     , latestTweetId: '#{latestTweetId}'
     , earliestTweetId: '#{earliestTweetId}'
     , infiniteScroll: #{infiniteScroll}
+    , autoDisplayNew: #{autoDisplayNew}
     }
   script(src='/js/index.js')
