@@ -1,9 +1,11 @@
-=================
-twitter-searchite
-=================
+===================
+|twitter-searchite|
+===================
 
-Quick creation of sites driven by polling a Twitter search, using `Node.js`_
-and `Redis`_.
+.. |twitter-searchite| image:: https://raw.github.com/insin/twitter-searchite/master/logo.png
+
+Quick creation of sites driven by Twitter search results, using `Node.js`_ and
+`Redis`_.
 
 .. _`Node.js`: http://nodejs.org/
 .. _`Redis`: http://redis.io
