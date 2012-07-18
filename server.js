@@ -18,6 +18,8 @@ app.helpers({
 , version: require('./package.json').version
 })
 
+io.set('log level', 1)
+
 // ------------------------------------------------------------ URL Handlers ---
 
 /**
@@ -83,12 +85,28 @@ app.get('/user/:id', function index(req, res, next) {
   })
 })
 
-// ---------------------------------------------------------- Poller Handler ---
+// --------------------------------------------------------- Poller Handlers ---
 
 poller.on('tweet', function(tweet) {
-  jade.renderFile('views/index_tweet.jade', {cache: true, tweet: tweet}, function(err, html) {
+  jade.renderFile('views/index_tweet.jade', {cache: true, tweet: tweet},
+  function(err, html) {
     if (err) throw err
-    io.sockets.emit('tweet', {latestTweetId: tweet.id, html: html})
+    io.sockets.emit('tweet', {
+      latestTweetId: tweet.id
+    , html: html
+    })
+  })
+})
+
+poller.on('tweets', function(tweets) {
+  jade.renderFile('views/new_tweets.jade', {cache: true, tweets: tweets},
+  function(err, html) {
+    if (err) throw err
+    io.sockets.emit('tweets', {
+      count: tweets.length
+    , latestTweetId: tweets[0].id
+    , html: html
+    })
   })
 })
 

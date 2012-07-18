@@ -53,18 +53,15 @@ function storeStream(data, cb) {
   , created: created.format('h:mm A - DD MMM YY')
   , ctime: created.valueOf()
   }
-  store(tweet, {source: 'stream', storeMaxId: true}, function(err) {
-    if (err) return cb(err)
-    cb(null, tweetDisplay(tweet))
-  })
+  store(tweet, {source: 'stream', storeMaxId: true}, cb)
 }
 
 /**
- * Stores (presumed) new Tweet data.
+ * Stores new Tweet data, returning it prepared for display if successful.
  */
 function store(tweet, options, cb) {
   options = extend({storeMaxId: false}, options)
-  console.log('(%s) [%s] %s: %s', options.source, moment(+tweet.ctime).format('HH:mm'), tweet.user, tweet.text)
+  console.log('%s> [%s] %s: %s', options.source, moment(+tweet.ctime).format('HH:mm'), tweet.user, tweet.text)
   var multi = $r.multi()
   // Add Tweet id to chronological view
   multi.zadd('tweets.cron', tweet.ctime, tweet.id)
@@ -76,7 +73,10 @@ function store(tweet, options, cb) {
   if (options.storeMaxId) {
     multi.set('since', tweet.id)
   }
-  multi.exec(cb)
+  multi.exec(function(err) {
+    if (err) return cb(err)
+    cb(null, tweetDisplay(tweet, moment()))
+  })
 }
 
 /**

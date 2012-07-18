@@ -3,6 +3,7 @@ void function() {
 var forEach = Array.prototype.forEach
 
 var TIMESTAMP_UPDATE_INTERVAL = 30000
+  , UPDATE_TIMESTAMP = 'update timestamp'
 
 var latestTweetId = context.latestTweetId
   , earliestTweetId = context.earliestTweetId
@@ -56,47 +57,79 @@ function get(url, cb) {
 
 // -------------------------------------------------------------- New Tweets ---
 
+/**
+ * A Tweet was received from the Streaming API.
+ */
 function onTweetReceived(tweet) {
   latestTweetId = tweet.latestTweetId
   if (!autoDisplayNew) {
     newTweetCount++
     newTweetHTML.unshift(tweet.html)
-    var newTweetsBar = document.getElementById('new-tweets-bar')
-    newTweetsBar.style.display = ''
-    newTweetsBar.innerHTML = newTweetCount + ' new Tweet' + pluralise(newTweetCount)
+    updateNewTweetsBar()
     return
   }
+  insertTweetHTML(tweet.html)
+}
+
+/**
+ * Tweets were received from the Polling API.
+ */
+function onTweetsReceived(tweets) {
+  latestTweetId = tweets.latestTweetId
+  if (!autoDisplayNew) {
+    newTweetCount += tweets.count
+    newTweetHTML.unshift(tweets.html)
+    updateNewTweetsBar()
+    return
+  }
+  insertTweetHTML(tweets.html, UPDATE_TIMESTAMP)
+}
+
+/**
+ * Shows the New Tweets bar (if currently hidden) and updates its Tweet count.
+ */
+function updateNewTweetsBar() {
+  var newTweetsBar = document.getElementById('new-tweets-bar')
+  if (newTweetsBar.style.display == 'none') {
+    newTweetsBar.style.display = ''
+  }
+  newTweetsBar.innerHTML = newTweetCount + ' new Tweet' + pluralise(newTweetCount)
+}
+
+/**
+ * Insert a chunk of HTML containing Tweets. If updateTimestamp is truthy,
+ * Tweets will have their timestamp updated as they're inserted.
+ */
+function insertTweetHTML(html, updateTimestamp) {
   var tweets = document.getElementById('tweets')
     , fragment = document.createDocumentFragment()
     , div = document.createElement('div')
     , now = moment()
-  div.innerHTML = tweet.html
+  div.innerHTML = html
   while(div.firstChild) {
+    if (updateTimestamp) {
+      updateTweetTimestamp(div.firstChild, now)
+    }
     registerTweetEventHandlers(div.firstChild)
     fragment.appendChild(div.firstChild)
   }
   tweets.insertBefore(fragment, tweets.firstChild)
 }
 
+/**
+ * Show new Tweets when the New Tweets bar is clicked.
+ */
 function showNewTweets() {
-  var tweets = document.getElementById('tweets')
-    , newTweetsBar = document.getElementById('new-tweets-bar')
-    , fragment = document.createDocumentFragment()
-    , div = document.createElement('div')
-    , now = moment()
-  div.innerHTML = newTweetHTML.join('')
-  while(div.firstChild) {
-    updateTweetTimestamp(div.firstChild, now)
-    registerTweetEventHandlers(div.firstChild)
-    fragment.appendChild(div.firstChild)
-  }
-  tweets.insertBefore(fragment, tweets.firstChild)
+  insertTweetHTML(newTweetHTML.join(''), UPDATE_TIMESTAMP)
   newTweetsBar.style.display = 'none'
   newTweetsBar.innerHTML = '0 new Tweets'
   newTweetHTML = []
   newTweetCount = 0
 }
 
+/**
+ * Progressive enhancement for Tweet elements.
+ */
 function registerTweetEventHandlers(tweetEl) {
   var span = tweetEl.querySelector('span[data-userid]')
     , userId = span.getAttribute('data-userid')
@@ -237,6 +270,7 @@ var autoDisplayInput = document.getElementById('auto-display-new')
 autoDisplayInput.onclick = toggleAutoDisplayNew
 var socket = io.connect('/')
 socket.on('tweet', onTweetReceived)
+socket.on('tweets', onTweetsReceived)
 
 // Update Tweet timestamps periodically
 setTimeout(updateTweetTimestamps, TIMESTAMP_UPDATE_INTERVAL)

@@ -20,10 +20,12 @@ var $t = new require('ntwitter')({
 , access_token_secret: settings.accessTokenSecret
 })
 
-var running = false
-  , timeoutId = null
-  , activeStream = null
-  , ee = new EventEmitter()
+var running = false         // true when streaming or waiting to poll
+  , polling = false         // true when polling the Search API as a fallback
+  , stopping = false        // true while the poller is being stopped
+  , activeStream = null     // Stream being used with the Streaming API
+  , timeoutId = null        // Timeout id when polling the Search API
+  , ee = new EventEmitter() // EventEmitter for poller events
 
 function start() {
   console.log('Poller starting...')
@@ -32,21 +34,30 @@ function start() {
 }
 
 function stop() {
+  stopping = true
   if (timeoutId !== null) {
     clearTimeout(timeoutId)
-    timeoutId = null
   }
   if (activeStream !== null) {
     activeStream.destroy()
-    activeStream = null
   }
   stopped()
 }
 
 function stopped() {
   running = false
+  polling = false
   activeStream = null
+  timeoutId = null
   console.log('Poller stopped.')
+  stopping = false
+}
+
+function fallback() {
+  if (stopping) return
+  console.log('Falling back to polling the Search API.')
+  polling = true
+  wait()
 }
 
 function wait() {
@@ -71,7 +82,13 @@ function onSearchResults(err, search) {
   if (err) throw err
   if (!search.results.length) {
     console.log('No new tweets found.')
-    return startStreaming()
+    if (polling) {
+      wait()
+    }
+    else {
+      startStreaming()
+    }
+    return
   }
 
   var tweets = search.results
@@ -86,36 +103,42 @@ function onSearchResults(err, search) {
   if (filtered) {
     console.log('(Filtered out %s RT%s)', filtered, pluralise(filtered))
   }
-  async.forEach(tweets, redisTweets.storeSearch, function(err) {
+  async.mapSeries(tweets, redisTweets.storeSearch, function(err, displayTweets) {
     if (err) throw err
     redisTweets.maxId(search.max_id_str, function(err) {
       if (err) throw err
-      startStreaming()
+      if (polling) {
+        ee.emit('tweets', displayTweets)
+        wait()
+      }
+      else {
+        startStreaming()
+      }
     })
   })
 }
 
 function startStreaming() {
-  console.log('Streaming Tweets with filter "%s"...', settings.stream)
   $t.verifyCredentials(function(err, data) {
     if (err) {
       console.log('Error verifying credentials: %s', err)
-      return stop()
+      return fallback()
     }
 
     $t.stream('statuses/filter', {'track': settings.stream}, function(stream) {
+      console.log('Streaming Tweets with filter "%s"...', settings.stream)
       activeStream = stream
 
       stream.on('data', onStreamedTweet)
 
       stream.on('error', function(err) {
         console.error('Error from Tweet stream: %s', err)
-        stopped()
+        fallback()
       })
 
       stream.on('destroy', function(data) {
         console.log('Stream destroyed: %s', data)
-        stopped()
+        fallback()
       })
     })
   })
