@@ -12,8 +12,8 @@ module.exports = {
 , stream: '#nodejs,Node.js'
   // Wait time between Search API calls checking for new Tweets (seconds)
 , pollInterval: 60
-  // Should the poller ignore Tweets which appear to be RTs?
-, ignoreRTs: true
+  // Should the poller filter Tweets which appear to be RTs?
+, filterRTs: true
 
 // Redis
 , redisPort: 6379

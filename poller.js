@@ -1,4 +1,5 @@
 var EventEmitter = require('events').EventEmitter
+  , format = require('util').format
 
 var async = require('async')
 
@@ -65,6 +66,22 @@ function wait() {
   console.log('Waiting for %ss...', settings.pollInterval)
 }
 
+/**
+ * Determines if tweet data received from a Twitter API is a retweet.
+ */
+function isRT(tweet) {
+  return (tweet.text.indexOf('RT ') == 0)
+}
+
+function negate(fn) {
+  return function() {
+    return !fn.apply(null, arguments)
+  }
+}
+
+/**
+ * Entry point for using the Search API.
+ */
 function searchForNewTweets() {
   redisTweets.maxId(function(err, sinceId) {
     if (err) throw err
@@ -78,42 +95,58 @@ function searchForNewTweets() {
   })
 }
 
+/**
+ * Handler for results from the Search API.
+ */
 function onSearchResults(err, search) {
   if (err) throw err
-  if (!search.results.length) {
-    console.log('No new tweets found.')
+
+  /**
+   * Determines what to do next after search results have been processed. If
+   * we're polling the Search API and any tweets were received, they will be
+   * emitted.
+   */
+  function next(tweets) {
     if (polling) {
+      if (tweets) {
+        ee.emit('tweets', tweets)
+      }
       wait()
     }
     else {
       startStreaming()
     }
-    return
   }
 
-  var tweets = search.results
-  if (settings.ignoreRTs) {
-    var tweetCount = tweets.length
-    tweets = tweets.filter(function(tweet) {
-      return (tweet.text.indexOf('RT ') != 0)
-    })
-    var filtered = tweetCount - tweets.length
+  if (!search.results.length) {
+    console.log('No new tweets found.')
+    return next()
   }
-  console.log('Got %s new Tweet%s', tweets.length, pluralise(tweets.length))
-  if (filtered) {
-    console.log('(Filtered out %s RT%s)', filtered, pluralise(filtered))
-  }
-  async.mapSeries(tweets, redisTweets.storeSearch, function(err, displayTweets) {
+
+  // We got at least one search result, so store the max tweet id we've seen
+  // before proceeding.
+  redisTweets.maxId(search.max_id_str, function(err) {
     if (err) throw err
-    redisTweets.maxId(search.max_id_str, function(err) {
+
+    var tweets = search.results
+      , filtered = ''
+    if (settings.filterRTs) {
+      tweets = tweets.filter(negate(isRT))
+      var rts = search.results.length - tweets.length
+      filtered = format(' (after filtering %s RT%s)', rts, pluralise(rts))
+    }
+
+    console.log('Got %s new Tweet%s%s',
+        tweets.length, pluralise(tweets.length), filtered)
+
+    // If we only got RTs as search results, we might have just filtered them
+    if (!tweets.length) {
+      return next()
+    }
+
+    async.mapSeries(tweets, redisTweets.storeSearch, function(err, displayTweets) {
       if (err) throw err
-      if (polling) {
-        ee.emit('tweets', displayTweets)
-        wait()
-      }
-      else {
-        startStreaming()
-      }
+      next(displayTweets)
     })
   })
 }
@@ -145,7 +178,7 @@ function startStreaming() {
 }
 
 function onStreamedTweet(tweet) {
-  if (settings.ignoreRTs && tweet.text.indexOf('RT ') == 0) {
+  if (settings.filterRTs && isRT(tweet)) {
     console.log('Filtered out RT: ' + tweet.text)
     return
   }
