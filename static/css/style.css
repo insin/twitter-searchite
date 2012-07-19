@@ -17,6 +17,9 @@
   border-top: 1px solid #ddd;
   border-bottom: 1px solid #eee;
 }
+#new-tweets-bar, #loading-bar {
+  display: none;
+}
 #tweets {
   position: relative;
 }

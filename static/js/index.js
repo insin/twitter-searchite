@@ -90,8 +90,8 @@ function onTweetsReceived(tweets) {
  */
 function updateNewTweetsBar() {
   var newTweetsBar = document.getElementById('new-tweets-bar')
-  if (newTweetsBar.style.display == 'none') {
-    newTweetsBar.style.display = ''
+  if (newTweetsBar.style.display != 'block') {
+    newTweetsBar.style.display = 'block'
   }
   newTweetsBar.innerHTML = newTweetCount + ' new Tweet' + pluralise(newTweetCount)
 }
@@ -171,7 +171,7 @@ function getTweetsForUser(userId, tweetEl) {
 function getNextPageOfTweets() {
   loadingNextPage = true
   var loadingBar = document.getElementById('loading-bar')
-  loadingBar.style.display = ''
+  loadingBar.style.display = 'block'
   if (!infiniteScroll) {
     var moreTweets = document.getElementById('more-tweets')
     moreTweets.style.display = 'none'
@@ -237,12 +237,8 @@ function updateTweetTimestamp(tweet, now) {
 // Set up handler for and hide the new tweets bar
 var newTweetsBar = document.getElementById('new-tweets-bar')
 newTweetsBar.onclick = showNewTweets
-newTweetsBar.style.display = 'none'
 
 // Set up paging
-var loadingBar = document.getElementById('loading-bar')
-loadingBar.style.display = 'none'
-
 if (infiniteScroll) {
   window.onscroll = function() {
     var html = document.querySelector('html')
