@@ -1,0 +1,15 @@
+extends admin
+
+block admin_content
+  include mixins/forms
+  h2 Searches
+  form.form-horizontal(method='POST', action=actionURL)
+    fieldset
+      legend #{action} Search
+      mixin csrf
+      fields = form.boundFieldsObj()
+      mixin field(fields.searchText)
+      mixin field(fields.filterText)
+      .form-actions
+        input.btn.btn-primary(type='submit', value=action)
+        a.btn(href='/admin/searches') Cancel

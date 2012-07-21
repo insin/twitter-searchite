@@ -1,0 +1,28 @@
+extends admin
+
+block admin_content
+  h2 Searches
+  if (searches.length)
+    table.table
+      col.span1
+      col.span3
+      col.span3
+      col.span2
+      thead
+        tr
+          th #
+          th Search Text
+          th Filter Text
+      tbody
+        for search in searches
+          tr
+           td= search.id
+           td= search.searchText
+           td= search.filterText
+           td
+             a.btn(href='/admin/searches/#{search.id}/edit') Edit
+             a.btn.btn-danger(href='/admin/searches/#{search.id}/delete') Delete
+  else
+    p There are no Searches defined yet.
+  .form-actions
+    a.btn.btn-primary(href='/admin/searches/add') Add Search

@@ -1,0 +1,18 @@
+extends admin
+
+block admin_content
+  include mixins/forms
+  h2 Searches
+  form(method='POST', action=actionURL)
+    fieldset
+      legend Confirm Deletion
+      mixin csrf
+      p Are you sure you want to delete this search?
+      dl
+        dt Search Text
+        dd= search.searchText
+        dt Filter Text
+        dd= search.filterText
+      .form-actions
+        input.btn.btn-danger(type='submit', value='Delete')
+        a.btn(href='/admin/searches') Cancel

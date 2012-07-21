@@ -1,0 +1,23 @@
+extends admin
+
+block admin_content
+  h2 Redis Info
+
+  h3 Data
+  table.table.table-condensed.table-bordered
+    col.span3
+    col.span6
+    tbody
+      tr
+        th Tweets
+        td= info.tweets
+
+  h3 INFO
+  table.table.table-condensed.table-bordered
+    col.span3
+    col.span6
+    tbody
+      each value, prop in info.INFO
+        tr
+          th= prop
+          td= value

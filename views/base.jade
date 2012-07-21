@@ -1,7 +1,7 @@
 !!!
 html
   head
-    title= search
+    title= activeSearchText
     meta(name='viewport', content='width=device-width, initial-scale=1.0')
     link(rel='stylesheet', href='http://current.bootstrapcdn.com/bootstrap-v204/css/bootstrap.min.css')
     style
@@ -15,13 +15,13 @@ html
     .navbar.navbar-fixed-top
       .navbar-inner
         .container
-          a.brand(href='/')= search
+          a.brand(href='/')= activeSearchText
           if user.isAdmin
             ul.nav
               li
                 a(href='/admin') Admin
-          action = user.isAnonymous ? '/auth' : '/unauth'
-          form.navbar-form.pull-right(method='POST', action=action)
+          navFormAction = user.isAnonymous ? '/auth' : '/unauth'
+          form.navbar-form.pull-right(method='POST', action=navFormAction)
             img(src='/img/twitter_userlight.png')
             if user.isAuthenticated
               span.screenname= user.name

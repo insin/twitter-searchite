@@ -10,7 +10,11 @@ var settings = require('./settings')
   , redis = require('./redis')
   , redisTweets = require('./tweets')
   , redisUsers = require('./users')
+  , redisSearches = require('./searches')
   , extend = require('./utils').extend
+  , forms = require('./forms')
+
+var SearchForm = forms.SearchForm
 
 var $r = redis.connection()
 
@@ -24,10 +28,10 @@ var $o = new OAuth(
 , 'HMAC-SHA1'
 )
 
-// ---------------------------------------------------------- Express Config ---
+// --------------------------------------------- Express Config & Middleware ---
 
 /**
- * Middleware which loads user details when the current user is authenticated.
+ * Loads user details when the current user is authenticated.
  */
 function loadUser(req, res, next) {
   if (req.session.userId) {
@@ -50,6 +54,9 @@ function loadUser(req, res, next) {
   }
 }
 
+/**
+ * Asserts that the current user is an admin.
+ */
 function requiresAdmin(req, res, next) {
   if (!req.user.isAdmin) return res.send(401)
   next()
@@ -61,6 +68,7 @@ app.use(express.session({
   secret: settings.sessionSecret
 , store: new RedisStore({client: $r})
 }))
+app.use(express.csrf())
 app.use(loadUser)
 app.use(app.router)
 app.use(express.static(__dirname + '/static'))
@@ -69,11 +77,12 @@ app.use(express.errorHandler({showStack: true, dumpExceptions: true}))
 app.set('view engine', 'jade')
 app.set('view options', {layout: false})
 app.helpers({
-  search: settings.search
+  activeSearchText: settings.search
 , version: require('./package.json').version
 })
 app.dynamicHelpers({
   user: function(req, res) { return req.user }
+, csrfToken: function(req, res) { return req.session._csrf }
 })
 
 io.set('log level', 1)
@@ -102,6 +111,85 @@ app.get('/', function index(req, res, next) {
  */
 app.get('/admin', requiresAdmin, function index(req, res, next) {
   res.render('admin')
+})
+
+/**
+ * Redis info.
+ */
+app.get('/admin/redis-info', requiresAdmin, function index(req, res, next) {
+  redis.info(function(err, info) {
+    if (err) return next(err)
+    res.render('redis_info', {info: info})
+  })
+})
+
+/**
+ * Search list.
+ */
+app.get('/admin/searches', requiresAdmin, function index(req, res, next) {
+  redisSearches.get(function(err, searches) {
+    if (err) return next(err)
+    res.render('searches', {searches: searches})
+  })
+})
+
+/**
+ * Add search
+ */
+app.all('/admin/searches/add', requiresAdmin, function index(req, res, next) {
+  if (req.method == 'POST') {
+    var form = new SearchForm({data: req.body})
+    if (form.isValid()) {
+      var search = form.cleanedData
+      return redisSearches.store(search, function(err) {
+        if (err) return next(err)
+        res.redirect('/admin/searches')
+      })
+    }
+  }
+  else {
+    var form = new SearchForm()
+  }
+  res.render('search_form', {action: 'Add', actionURL: req.url, form: form})
+})
+
+/**
+ * Edit search.
+ */
+app.all('/admin/searches/:id/edit', requiresAdmin, function index(req, res, next) {
+  redisSearches.byId(req.params.id, function(err, search) {
+    if (!search) return res.send(404)
+    if (req.method == 'POST') {
+      var form = new SearchForm({initial: search, data: req.body})
+      if (form.isValid()) {
+        extend(search, form.cleanedData)
+        return redisSearches.store(search, function(err) {
+          if (err) return next(err)
+          res.redirect('/admin/searches')
+        })
+      }
+    }
+    else {
+      var form = new SearchForm({initial: search})
+    }
+    res.render('search_form', {action: 'Edit', actionURL: req.url, form: form})
+  })
+})
+
+/**
+ * Delete search.
+ */
+app.all('/admin/searches/:id/delete', requiresAdmin, function index(req, res, next) {
+  redisSearches.byId(req.params.id, function(err, search) {
+    if (!search) return res.send(404)
+    if (req.method == 'POST') {
+      return redisSearches.del(search, function(err) {
+        if (err) return next(err)
+        res.redirect('/admin/searches')
+      })
+    }
+    res.render('delete_search', {actionURL: req.url, search: search})
+  })
 })
 
 /**
@@ -150,6 +238,9 @@ app.get('/user/:id', function index(req, res, next) {
   })
 })
 
+/**
+ * Twitter auth initiation.
+ */
 app.post('/auth', function(req, res, next) {
   $o.getOAuthRequestToken(function(err, token, secret, results) {
     if (err) return next(err)
@@ -158,6 +249,9 @@ app.post('/auth', function(req, res, next) {
   })
 })
 
+/**
+ * Twitter auth callback.
+ */
 app.get('/auth/callback', function(req, res, next) {
   if (!req.session.oauth) return next(new Error('Twitter auth not in progress'))
   var oauth = req.session.oauth
@@ -179,6 +273,9 @@ app.get('/auth/callback', function(req, res, next) {
   })
 })
 
+/**
+ * Logout.
+ */
 app.post('/unauth', function(req, res, next) {
   if (!req.user.isAuthenticated) return res.redirect('/')
   req.session.destroy(function(err) {

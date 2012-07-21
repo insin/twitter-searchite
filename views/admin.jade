@@ -3,3 +3,10 @@ extends base
 block content
   .page-header
     h1 Admin
+  .row
+    .span3
+      ul.nav.nav-tabs.nav-stacked
+        li: a(href='/admin/searches') Searches
+        li: a(href='/admin/redis-info') Redis Info
+    .span9
+      block admin_content

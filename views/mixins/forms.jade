@@ -1,0 +1,14 @@
+mixin csrf
+  input(type='hidden', name='_csrf', value=csrfToken)
+
+mixin field(field)
+  errors = field.errors().errors
+  errorClass = errors.length ? 'error' : false
+  .control-group(class=errorClass)
+    label.control-label(for=field.idForLabel())= field.getLabel()
+    .controls
+      != field
+      for error in errors
+        span.help-inline= error
+      if field.helpText
+        p.help-block= field.helpText
