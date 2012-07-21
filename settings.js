@@ -4,6 +4,7 @@ module.exports = {
 , consumerSecret: ''
 , accessToken: ''
 , accessTokenSecret: ''
+, callbackDomain: ''
 
 // Poller
   // Search text
@@ -21,6 +22,10 @@ module.exports = {
 , redisDatabase: 0
   // Password, or false if auth is nor required
 , redisAuth: false
+
+// Express
+, sessionSecret: ''
+, port: 3000
 
 // Frontend
   // Number of Tweets per page

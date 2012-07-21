@@ -12,6 +12,8 @@
   , "redis": "~0.7.2"
   , "jade": "~0.26.3"
   , "socket.io": "~0.9.6"
+  , "oauth": "~0.9.7"
+  , "connect-redis": "~1.4.0"
   }
 , "repository": {
     "type": "git"

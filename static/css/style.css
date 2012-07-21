@@ -1,3 +1,8 @@
+
+span.screenname {
+  font-size: 16px;
+  padding: 0 5px;
+}
 #new-tweets-bar, #more-tweets {
   position: relative;
   background-color: #f5f5f5;

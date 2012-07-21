@@ -16,7 +16,7 @@ module.exports = {
 , priorTo: priorTo
 }
 
-var $r = redis.connect()
+var $r = redis.connection()
 
 // Replace moment's time-ago format strings with shorter representations
 extend(moment.relativeTime, {
