@@ -6,12 +6,24 @@ var express = require('express')
   , OAuth = require('oauth').OAuth
 
 var settings = require('./settings')
-  , poller = require('./poller')
+  , Poller = require('./poller')
   , redis = require('./redis')
   , extend = require('./utils').extend
   , forms = require('./forms')
 
 var SearchForm = forms.SearchForm
+
+var poller = new Poller({
+  search: {searchText: settings.search, filterText: settings.stream}
+, filterRTs: settings.filterRTs
+, pollInterval: settings.pollInterval
+, ntwitterConfig: {
+    consumer_key: settings.consumerKey
+  , consumer_secret: settings.consumerSecret
+  , access_token_key: settings.accessToken
+  , access_token_secret: settings.accessTokenSecret
+  }
+})
 
 var $r = require('./redis/connection')
 
