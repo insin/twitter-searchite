@@ -1,11 +1,9 @@
-var redis = require('./redis')
-
 module.exports = {
   store: store
 , byId: byId
 }
 
-var $r = redis.connection()
+var $r = require('./connection')
 
 function store(user, cb) {
   $r.sismember('users', user.id, function(err, exists) {

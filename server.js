@@ -8,15 +8,12 @@ var express = require('express')
 var settings = require('./settings')
   , poller = require('./poller')
   , redis = require('./redis')
-  , redisTweets = require('./tweets')
-  , redisUsers = require('./users')
-  , redisSearches = require('./searches')
   , extend = require('./utils').extend
   , forms = require('./forms')
 
 var SearchForm = forms.SearchForm
 
-var $r = redis.connection()
+var $r = require('./redis/connection')
 
 var $o = new OAuth(
   'https://api.twitter.com/oauth/request_token'
@@ -35,7 +32,7 @@ var $o = new OAuth(
  */
 function loadUser(req, res, next) {
   if (req.session.userId) {
-    redisUsers.byId(req.session.userId, function(err, user) {
+    redis.users.byId(req.session.userId, function(err, user) {
       if (err) return next(err)
       req.user = extend(user, {
         isAuthenticated: true
@@ -93,7 +90,7 @@ io.set('log level', 1)
  * Index page.
  */
 app.get('/', function index(req, res, next) {
-  redisTweets.get(function(err, tweets) {
+  redis.tweets.get(function(err, tweets) {
     if (err) return next(err)
     res.render('index', {
       tweets: tweets
@@ -117,7 +114,7 @@ app.get('/admin', requiresAdmin, function index(req, res, next) {
  * Redis info.
  */
 app.get('/admin/redis-info', requiresAdmin, function index(req, res, next) {
-  redis.info(function(err, info) {
+  redis.redis.info(function(err, info) {
     if (err) return next(err)
     res.render('redis_info', {info: info})
   })
@@ -127,7 +124,7 @@ app.get('/admin/redis-info', requiresAdmin, function index(req, res, next) {
  * Search list.
  */
 app.get('/admin/searches', requiresAdmin, function index(req, res, next) {
-  redisSearches.get(function(err, searches) {
+  redis.searches.get(function(err, searches) {
     if (err) return next(err)
     res.render('searches', {searches: searches})
   })
@@ -141,7 +138,7 @@ app.all('/admin/searches/add', requiresAdmin, function index(req, res, next) {
     var form = new SearchForm({data: req.body})
     if (form.isValid()) {
       var search = form.cleanedData
-      return redisSearches.store(search, function(err) {
+      return redis.searches.store(search, function(err) {
         if (err) return next(err)
         res.redirect('/admin/searches')
       })
@@ -157,13 +154,13 @@ app.all('/admin/searches/add', requiresAdmin, function index(req, res, next) {
  * Edit search.
  */
 app.all('/admin/searches/:id/edit', requiresAdmin, function index(req, res, next) {
-  redisSearches.byId(req.params.id, function(err, search) {
+  redis.searches.byId(req.params.id, function(err, search) {
     if (!search) return res.send(404)
     if (req.method == 'POST') {
       var form = new SearchForm({initial: search, data: req.body})
       if (form.isValid()) {
         extend(search, form.cleanedData)
-        return redisSearches.store(search, function(err) {
+        return redis.searches.store(search, function(err) {
           if (err) return next(err)
           res.redirect('/admin/searches')
         })
@@ -180,10 +177,10 @@ app.all('/admin/searches/:id/edit', requiresAdmin, function index(req, res, next
  * Delete search.
  */
 app.all('/admin/searches/:id/delete', requiresAdmin, function index(req, res, next) {
-  redisSearches.byId(req.params.id, function(err, search) {
+  redis.searches.byId(req.params.id, function(err, search) {
     if (!search) return res.send(404)
     if (req.method == 'POST') {
-      return redisSearches.del(search, function(err) {
+      return redis.searches.del(search, function(err) {
         if (err) return next(err)
         res.redirect('/admin/searches')
       })
@@ -212,7 +209,7 @@ function renderNewTweets(res, next, tweets) {
  * New Tweets (XHR)
  */
 app.get('/new/:latest', function index(req, res, next) {
-  redisTweets.since(req.params.latest, function(err, tweets) {
+  redis.tweets.since(req.params.latest, function(err, tweets) {
     if (err) return next(err)
     renderNewTweets(res, next, tweets)
   })
@@ -222,7 +219,7 @@ app.get('/new/:latest', function index(req, res, next) {
  * Previous page of Tweets (XHR)
  */
 app.get('/page/:earliest', function index(req, res, next) {
-  redisTweets.priorTo(req.params.earliest, function(err, tweets) {
+  redis.tweets.priorTo(req.params.earliest, function(err, tweets) {
     if (err) return next(err)
     renderNewTweets(res, next, tweets)
   })
@@ -232,7 +229,7 @@ app.get('/page/:earliest', function index(req, res, next) {
  * User Tweets (XHR)
  */
 app.get('/user/:id', function index(req, res, next) {
-  redisTweets.byUser(req.params.id, function(err, tweets) {
+  redis.tweets.byUser(req.params.id, function(err, tweets) {
     if (err) return next(err)
     res.render('user', {tweets: tweets})
   })
@@ -264,7 +261,7 @@ app.get('/auth/callback', function(req, res, next) {
     , accessKey: accessKey
     , accessSecret: accessSecret
     }
-    redisUsers.store(user, function(err) {
+    redis.users.store(user, function(err) {
       if (err) return next(err)
       req.session.userId = user.id
       delete req.session.oauth

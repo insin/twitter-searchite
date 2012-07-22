@@ -1,9 +1,8 @@
 var moment = require('moment')
   , twitter = require('twitter-text')
 
-var settings = require('./settings')
-  , extend = require('./utils').extend
-  , redis = require('./redis')
+var settings = require('../settings')
+  , extend = require('../utils').extend
 
 module.exports = {
   storeSearch: storeSearch
@@ -16,7 +15,7 @@ module.exports = {
 , priorTo: priorTo
 }
 
-var $r = redis.connection()
+var $r = require('./connection')
 
 // Replace moment's time-ago format strings with shorter representations
 extend(moment.relativeTime, {

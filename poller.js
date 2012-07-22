@@ -5,7 +5,7 @@ var async = require('async')
 
 var settings = require('./settings')
   , pluralise = require('./utils').pluralise
-  , redisTweets = require('./tweets')
+  , redis = require('./redis')
 
 // Export public API
 module.exports = {
@@ -88,7 +88,7 @@ function stopped() {
  * Entry point for using the Search API.
  */
 function searchForNewTweets() {
-  redisTweets.maxId(function(err, sinceId) {
+  redis.tweets.maxId(function(err, sinceId) {
     if (err) throw err
     sinceId = sinceId || 0
     console.log('Searching for tweets with "%s", since #%s...',
@@ -115,7 +115,7 @@ function onSearchResults(err, search) {
 
   // We got at least one search result, so store the max tweet id we've seen
   // before proceeding.
-  redisTweets.maxId(search.max_id_str, function(err) {
+  redis.tweets.maxId(search.max_id_str, function(err) {
     if (err) throw err
 
     var tweets = search.results
@@ -136,7 +136,7 @@ function onSearchResults(err, search) {
       return afterSearch()
     }
 
-    async.mapSeries(tweets, redisTweets.storeSearch, function(err, displayTweets) {
+    async.mapSeries(tweets, redis.tweets.storeSearch, function(err, displayTweets) {
       if (err) throw err
       afterSearch(displayTweets)
     })
@@ -212,7 +212,7 @@ function onStreamedTweet(tweet) {
     return
   }
 
-  redisTweets.storeStream(tweet, function(err, storedTweet) {
+  redis.tweets.storeStream(tweet, function(err, storedTweet) {
     if (err) {
       console.log('Error storing tweet: %s', err)
       return stop()

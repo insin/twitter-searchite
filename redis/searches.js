@@ -1,5 +1,3 @@
-var redis = require('./redis')
-
 module.exports = {
   store: store
 , get: get
@@ -8,7 +6,7 @@ module.exports = {
 , del: del
 }
 
-var $r = redis.connection()
+var $r = require('./connection')
 
 /**
  * Saves or updates a search, based on whether or not it has an id.
