@@ -1,5 +1,5 @@
 {
-  "name": "twitter-searchite"
+  "name": "searchite"
 , "version": "0.0.0"
 , "description": "Quick creation of sites driven by polling a Twitter search"
 , "dependencies": {

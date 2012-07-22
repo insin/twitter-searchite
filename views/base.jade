@@ -2,7 +2,7 @@ include mixins/forms
 !!!
 html
   head
-    title= activeSearchText
+    title #{appName} | #{activeSearchText}
     meta(name='viewport', content='width=device-width, initial-scale=1.0')
     link(rel='stylesheet', href='http://current.bootstrapcdn.com/bootstrap-v204/css/bootstrap.min.css')
     style
@@ -16,7 +16,7 @@ html
     .navbar.navbar-fixed-top
       .navbar-inner
         .container
-          a.brand(href='/')= activeSearchText
+          a.brand(href='/')= appName
           if user.isAdmin
             ul.nav
               li
@@ -36,5 +36,5 @@ html
       hr
       footer
         p
-          a(href='https://github.com/insin/twitter-searchite') twitter-searchite
-          |  v#{version}
+          a(href='https://github.com/insin/twitter-searchite')= appName
+          |  v#{appVersion}

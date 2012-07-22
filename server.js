@@ -75,7 +75,8 @@ app.set('view engine', 'jade')
 app.set('view options', {layout: false})
 app.helpers({
   activeSearchText: settings.search
-, version: require('./package.json').version
+, appName: require('./package.json').name
+, appVersion: require('./package.json').version
 })
 app.dynamicHelpers({
   user: function(req, res) { return req.user }
