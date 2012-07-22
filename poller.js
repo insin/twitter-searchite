@@ -97,6 +97,7 @@ function searchForNewTweets() {
       rpp: 100
     , result_type: 'recent'
     , since_id: sinceId
+    , include_entities: true
     }, onSearchResults)
   })
 }

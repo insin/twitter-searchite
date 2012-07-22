@@ -7,7 +7,7 @@
       a.account(href='#{tweet.accountlink}')
         img.avatar(src='#{tweet.avatar}')
         span.tweet-username @#{tweet.user}
-  p.tweet-text!= tweet.text
+  p.tweet-text!= tweet.html
   .tweet-footer
     block tweet_footer
       span.tweet-created= tweet.created

@@ -33,6 +33,7 @@ function storeSearch(data, cb) {
   var tweet = {
     id: data.id_str
   , text: data.text
+  , html: twitter.autoLink(data.text, {urlEntities: data.entities.urls})
   , user: data.from_user
   , userId: data.from_user_id_str
   , avatar: data.profile_image_url
@@ -47,6 +48,7 @@ function storeStream(data, cb) {
   var tweet = {
     id: data.id_str
   , text: data.text
+  , html: twitter.autoLink(data.text, {urlEntities: data.entities.urls})
   , user: data.user.screen_name
   , userId: data.user.id_str
   , avatar: data.user.profile_image_url
@@ -135,7 +137,7 @@ function tweetDisplay(obj, now) {
     , accountlink = 'https://twitter.com/' + obj.user
   return {
     id: obj.id
-  , text: twitter.autoLink(obj.text)
+  , html: obj.html
   // User
   , user: obj.user
   , userId: obj.userId
