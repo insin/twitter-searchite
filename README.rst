@@ -32,6 +32,16 @@ Usage
 
 #. Start ``redis-server``.
 
+   * To add yourself as an admin, fire up ``redis-cli`` and add your Twitter
+     screen name to the ``admins`` set, e.g.::
+
+        $ redis-cli
+        redis 127.0.0.1:6379> sadd admins twitinsin
+        (integer) 1
+
+     After signing in with your Twitter account, you'll have access to the admin
+     section.
+
 #. ``node server.js`` to start polling for Tweets and serve up a site which uses
    the Tweets.
 
