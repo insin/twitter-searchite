@@ -124,6 +124,29 @@ app.get('/admin', requiresAdmin, function index(req, res, next) {
 })
 
 /**
+ * Poller info.
+ */
+app.get('/admin/poller', requiresAdmin, function index(req, res, next) {
+  redis.redis.info(function(err, info) {
+    if (err) return next(err)
+    res.render('poller', {poller: poller})
+  })
+})
+
+/**
+ * Poller control.
+ */
+app.post('/admin/poller-control', requiresAdmin, function index(req, res, next) {
+  if (req.body.start) {
+    poller.start()
+  }
+  else if (req.body.stop) {
+    poller.stop()
+  }
+  res.redirect('/admin/poller')
+})
+
+/**
  * Redis info.
  */
 app.get('/admin/redis-info', requiresAdmin, function index(req, res, next) {

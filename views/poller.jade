@@ -1,0 +1,43 @@
+extends admin
+
+block admin_content
+  h2 Poller
+  p Info and controls for the Poller associated with the site account.
+  table.table.table-condensed.table-bordered
+    col.span2
+    col.span3
+    col.span3
+    tbody
+      tr
+        th Created At
+        td #{poller.createdAt.format('h:mm A - DD MMM YY')} (#{poller.createdAt.fromNow(true)})
+      tr
+        th State
+        td
+          | #{poller.state}
+          if (poller.running())
+            br
+            | since #{poller.runningSince.format('h:mm A - DD MMM YY')} (#{poller.runningSince.fromNow(true)})
+        td
+          form(action='/admin/poller-control', method='POST', style='margin: 0')
+            div
+              mixin csrf
+              if (poller.running())
+                input.btn.btn-danger(type='submit', name='stop', value='Stop')
+              if (poller.stopped())
+                input.btn.btn-success(type='submit', name='start', value='Start')
+      tr
+        th Method
+        td= poller.method
+        td
+          if (poller.streaming())
+            | #{poller.search.filterText}
+          if (poller.polling())
+            | #{poller.search.searchText}
+      tr
+        th Tweets Received
+        td(colspan=2)= poller.tweetsReceived
+      if (poller.filterRTs)
+        tr
+          th Retweets Filtered
+          td(colspan=2)= poller.retweetsFiltered

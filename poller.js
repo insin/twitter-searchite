@@ -4,6 +4,7 @@ var EventEmitter = require('events').EventEmitter
 var async = require('async')
   , Concur = require('Concur')
   , Twitter = require('ntwitter')
+  , moment = require('moment')
 
 var utils = require('./utils')
   , redis = require('./redis')
@@ -56,6 +57,11 @@ var Poller = module.exports = Concur.extend({
     this.method = null // Defined when state is RUNNING
     this.stream = null
     this.timeoutId = null
+    // Stats & Info
+    this.createdAt = moment()
+    this.runningSince = null
+    this.tweetsReceived = 0
+    this.retweetsFiltered = 0
     // User-supplied state
     kwargs = extend({
       search: null
@@ -83,6 +89,7 @@ var Poller = module.exports = Concur.extend({
 , running: function(transition) {
     if (!transition) return this.state === States.RUNNING
     this.state = States.RUNNING
+    this.runningSince = moment()
   }
 , stopping: function(transition) {
     if (!transition) return this.state === States.STOPPING
@@ -173,11 +180,13 @@ Poller.prototype.onSearchResults = function(err, search) {
     if (err) throw err
     var tweets = search.results
       , filtered = '.'
+    poller.tweetsReceived += tweets.length
     if (poller.filterRTs) {
       tweets = tweets.filter(negate(isRT))
       var rts = search.results.length - tweets.length
       if (rts) {
         filtered = format(' (after filtering %s retweet%s).', rts, pluralise(rts))
+        poller.retweetsFiltered += rts
       }
     }
     console.log('Got %s new tweet%s%s',
@@ -224,8 +233,8 @@ Poller.prototype.wait = function() {
  * Initiates falling back to using the Search API if streaming fails.
  */
 Poller.prototype.fallback = function() {
-  // If we're stopping, we don't care if streaming goes down
-  if (this.stopping()) return
+  // If we're stopping or stopped, we don't care if streaming goes down
+  if (this.stopping() || this.stopped()) return
   console.log('Falling back to polling the Search API.')
   // If we're falling back while starting, we're done starting up
   if (this.starting()) {
@@ -259,7 +268,9 @@ Poller.prototype.startStreaming = function() {
 }
 
 Poller.prototype.onStreamData = function(tweet) {
+  this.tweetsReceived++
   if (this.filterRTs && isRT(tweet)) {
+    this.retweetsFiltered++
     return console.log('Filtered out a retweet.')
   }
 
