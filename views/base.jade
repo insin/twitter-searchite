@@ -1,3 +1,4 @@
+include mixins/forms
 !!!
 html
   head
@@ -22,12 +23,14 @@ html
                 a(href='/admin') Admin
           navFormAction = user.isAnonymous ? '/auth' : '/unauth'
           form.navbar-form.pull-right(method='POST', action=navFormAction)
-            img(src='/img/twitter_userlight.png')
-            if user.isAuthenticated
-              span.screenname= user.name
-              input.btn.primary(type='submit', value='Sign Out')
-            else
-              input.btn.primary(type='submit', value='Sign In')
+            div
+              mixin csrf
+              img(src='/img/twitter_userlight.png')
+              if user.isAuthenticated
+                span.screenname= user.name
+                input.btn.primary(type='submit', value='Sign Out')
+              else
+                input.btn.primary(type='submit', value='Sign In')
     .container
       block content
       hr
