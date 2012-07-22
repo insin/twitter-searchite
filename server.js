@@ -253,7 +253,7 @@ app.post('/auth', function(req, res, next) {
  * Twitter auth callback.
  */
 app.get('/auth/callback', function(req, res, next) {
-  if (!req.session.oauth) return next(new Error('Twitter auth not in progress'))
+  if (!req.session.oauth) return res.send(403)
   var oauth = req.session.oauth
   $o.getOAuthAccessToken(oauth.token, oauth.secret, req.query.oauth_verifier,
   function(err, accessKey, accessSecret, results) {
