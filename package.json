@@ -6,7 +6,7 @@
     "async": "~0.1.22"
   , "hiredis": "~0.1.14"
   , "express": "~2.5.11"
-  , "moment": "~1.6.2"
+  , "moment": "~1.7.0"
   , "ntwitter": "~0.4.0"
   , "twitter-text": "~1.5.0"
   , "redis": "~0.7.2"
